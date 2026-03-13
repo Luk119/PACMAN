@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pac-Man DQN – Deep Q-Learning</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+<header>
+  <div class="logo">PAC-MAN&nbsp;&nbsp;DQN</div>
+  <div class="subtitle">Implementacja algorytmu Deep Q-Learning &nbsp;·&nbsp; Praca inżynierska</div>
+  <div class="theme-toggle-wrap" title="Przełącz motyw">
+    <span class="theme-icon">🌙</span>
+    <label class="toggle-switch theme-toggle-switch">
+      <input type="checkbox" id="toggleTheme" onchange="onToggleTheme(this)" />
+      <span class="toggle-slider"></span>
+    </label>
+    <span class="theme-icon">☀</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════ GŁÓWNY UKŁAD ════════════════════════════════
+   Dwie kolumny w normalnym flow — strona scrolluje, nic nie jest ukryte.
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page-wrapper">
+
+  <!-- ════════════════════ LEWA KOLUMNA — CANVAS ══════════════════════════ -->
+  <div class="game-column">
+
+    <div class="canvas-frame">
+      <canvas id="gameCanvas"></canvas>
+      <div class="scanlines"></div>
+    </div>
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-item">
+        <span class="hud-label">Wynik</span>
+        <span class="hud-value yellow" id="hudScore">0</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Czas</span>
+        <span class="hud-value" id="hudTime">0:00</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Poziom</span>
+        <span class="hud-value" id="hudLevel">1</span>
+      </div>
+      <div class="hud-item hud-detail">
+        <span class="hud-label">Dystans</span>
+        <span class="hud-value" id="hudManhattan">–</span>
+      </div>
+      <div class="hud-item hud-detail">
+        <span class="hud-label">Kroki</span>
+        <span class="hud-value" id="hudSteps">0</span>
+      </div>
+      <div class="hud-item hud-detail">
+        <span class="hud-label">Epsilon ε</span>
+        <span class="hud-value pink" id="hudEpsilon">1.000</span>
+      </div>
+      <div class="hud-item hud-detail">
+        <span class="hud-label">Online</span>
+        <span class="badge badge-idle" id="onlineLearningBadge">OFF</span>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar" id="statusBar">Łączenie z serwerem…</div>
+
+  </div><!-- /game-column -->
+
+
+  <!-- ════════════════════ PRAWA KOLUMNA — PANELE ═════════════════════════
+     Wszystkie panele w normalnym flow — bez ograniczeń wysokości.
+  ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="control-column">
+
+    <!-- ── PANEL: TRYB DZIAŁANIA ──────────────────────────────────────── -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="icon">⚡</span>Tryb działania
+      </div>
+      <div class="panel-body">
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="btnModePlay"
+                  onclick="setMode('play')">▶&nbsp; Gra interaktywna</button>
+          <button class="mode-btn" id="btnModeTrain"
+                  onclick="setMode('train')">⚙&nbsp; Panel treningu</button>
+        </div>
+
+        <hr class="section-sep" />
+        <div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;
+                    letter-spacing:1.5px;margin-bottom:5px;">Widok</div>
+        <div class="mode-toggle">
+          <button class="mode-btn" id="btnToggleDetails"
+                  onclick="setDetailsView(!App.detailsOn)">📊&nbsp; Dane live</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PANEL: STEROWANIE (tryb play) ─────────────────────────────── -->
+    <div class="panel" id="playPanel">
+      <div class="panel-header">
+        <span class="icon">🕹</span>Sterowanie Pac-Manem
+      </div>
+      <div class="panel-body">
+
+        <!-- Poziomy -->
+        <div>
+          <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:7px;
+                      text-transform:uppercase;letter-spacing:1.5px;">Poziom labiryntu</div>
+          <div class="level-selector">
+            <button class="level-btn active" onclick="onLevelSelect(1)">Poziom 1</button>
+            <button class="level-btn"        onclick="onLevelSelect(2)">Poziom 2</button>
+            <button class="level-btn"        onclick="onLevelSelect(3)">Poziom 3</button>
+          </div>
+        </div>
+
+        <hr class="section-sep" />
+
+        <!-- Klawisze -->
+        <div class="kbd-hint">
+          <div class="kbd-row">
+            <div class="kbd" id="keyW">W</div>
+            <div style="width:6px;"></div>
+            <div class="kbd" id="keyUP">↑</div>
+          </div>
+          <div class="kbd-row">
+            <div class="kbd" id="keyA">A</div>
+            <div class="kbd" id="keyS">S</div>
+            <div class="kbd" id="keyD">D</div>
+            <div style="width:6px;"></div>
+            <div class="kbd" id="keyLEFT">←</div>
+            <div class="kbd" id="keyDOWN">↓</div>
+            <div class="kbd" id="keyRIGHT">→</div>
+          </div>
+          <div class="kbd-hint-text">WASD lub strzałki &nbsp;·&nbsp; [P] = start &nbsp;·&nbsp; [R] = reset</div>
+        </div>
+
+        <hr class="section-sep" />
+
+        <!-- Przyciski -->
+        <div class="btn-row">
+          <button class="btn btn-success" id="btnStartGame"
+                  onclick="startGame()">▶ START [P]</button>
+          <button class="btn btn-primary" onclick="initGame(App.currentLevel)">↩ Reset [R]</button>
+        </div>
+
+        <!-- Uczenie online -->
+        <div class="toggle-row">
+          <span class="toggle-label">Uczenie online podczas gry</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggleOnline"
+                   onchange="onToggleOnlineLearning(this)" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <!-- Legenda -->
+        <div class="legend">
+          <div><span style="color:var(--yellow);margin-right:5px;">●</span>Pac-Man – sterowany klawiaturą przez gracza</div>
+          <div><span style="color:var(--pink);margin-right:5px;">●</span>Duszek – sterowany modelem DQN</div>
+          <div><span style="color:#ccd;margin-right:5px;">·</span>Kropka = 10 pkt
+               &nbsp;&nbsp;<span style="color:#ffd700;margin-right:5px;">●</span>Power pellet = 50 pkt</div>
+          <div><span style="color:#4444ff;margin-right:5px;">●</span>Zjedzenie duszka = 200 pkt</div>
+        </div>
+
+      </div>
+    </div><!-- /playPanel -->
+
+
+    <!-- ── PANEL: TRENING (tryb train) ───────────────────────────────── -->
+    <div class="panel" id="trainPanel" style="display:none;">
+      <div class="panel-header">
+        <span class="icon">⚙</span>Automatyczny trening DQN
+        <span class="badge badge-idle ml-auto" id="trainStatusBadge">IDLE</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- ══ PODGLĄD NA ŻYWO ══════════════════════════════════════════ -->
+        <div style="background:var(--bg-inset);border:1px solid var(--border);
+                    border-left:3px solid var(--green);border-radius:5px;padding:10px 12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+            <div>
+              <div style="font-size:0.72rem;font-weight:bold;color:var(--green);
+                          text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px;">
+                👁 Podgląd na żywo
+              </div>
+              <div style="font-size:0.67rem;color:var(--text-dim);">
+                Canvas pokazuje środowisko treningowe (~8 fps)
+              </div>
+            </div>
+            <label class="toggle-switch" style="flex-shrink:0;">
+              <input type="checkbox" id="toggleLiveWatch"
+                     onchange="onToggleLiveWatch(this)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div id="liveWatchStatus"
+               style="font-size:0.68rem;color:var(--text-dim);font-family:'Courier New',monospace;">
+            Włącz, aby obserwować uczenie się duszka w czasie rzeczywistym
+          </div>
+        </div>
+
+        <hr class="section-sep" />
+
+        <!-- Parametry -->
+        <div class="input-row">
+          <label>Epizody:</label>
+          <input type="number" id="trainEpisodes" value="500" min="1" max="100000" step="100" />
+        </div>
+        <div class="input-row">
+          <label>Poziom:</label>
+          <select id="trainLevel">
+            <option value="1">Poziom 1 – klasyczny</option>
+            <option value="2">Poziom 2 – trudniejszy</option>
+            <option value="3">Poziom 3 – najtrudniejszy</option>
+          </select>
+        </div>
+
+        <hr class="section-sep" />
+
+        <!-- Postęp -->
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span>Postęp treningu</span>
+            <span id="trainProgress">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="trainProgressBar"></div>
+          </div>
+          <div class="progress-label" id="trainEpNum">0 / 0 epizodów</div>
+        </div>
+
+        <!-- Start / Stop -->
+        <div class="btn-row">
+          <button class="btn btn-success" id="btnStartTrain"
+                  onclick="onStartTraining()">▶ Start treningu</button>
+          <button class="btn btn-danger"  id="btnStopTrain"
+                  onclick="onStopTraining()" disabled>⏹ Stop</button>
+        </div>
+
+        <hr class="section-sep" />
+
+        <!-- Statystyki -->
+        <div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Statystyki treningu</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Avg Reward</div>
+            <div class="stat-value yellow" id="trainAvgR">–</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Best Reward</div>
+            <div class="stat-value green" id="trainBestR">–</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Epsilon ε</div>
+            <div class="stat-value pink" id="trainEpsilon">–</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Loss</div>
+            <div class="stat-value" id="trainLoss">–</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Buffer</div>
+            <div class="stat-value" id="trainBufSize">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Train Steps</div>
+            <div class="stat-value" id="trainSteps">0</div>
+          </div>
+        </div>
+
+        <hr class="section-sep" />
+
+        <!-- Model + wykres -->
+        <div class="btn-row">
+          <button class="btn" onclick="onOpenPlot()">📈 Wykres postępu</button>
+        </div>
+
+        <hr class="section-sep" />
+
+        <!-- Log epizodów -->
+        <div class="log-wrap">
+          <div class="log-title">Log epizodów (najnowsze na górze)</div>
+          <div class="log-box" id="trainLog">
+            <span style="color:var(--text-dim);">Uruchom trening, aby zobaczyć logi…</span>
+          </div>
+        </div>
+
+        <!-- Opis trybu -->
+        <div style="font-size:0.68rem;color:var(--text-dim);line-height:1.7;
+                    padding-top:8px;border-top:1px solid var(--border);">
+          <strong style="color:var(--text-mid);">Tryb automatyczny:</strong>
+          Pac-Man ucieka heurystycznie. Duszek uczy się przez DQN (ε-greedy).
+          Trening działa w wątku tła — możesz grać równocześnie.
+        </div>
+
+      </div>
+    </div><!-- /trainPanel -->
+
+    <!-- ── PANEL: TABLICA WYNIKÓW ───────────────────────────────────── -->
+    <div class="panel" id="leaderboardPanel">
+      <div class="panel-header">
+        <span class="icon">🏆</span>Tablica wyników
+      </div>
+      <div class="panel-body">
+
+        <!-- Nick input -->
+        <div class="input-row">
+          <label>Twój nick:</label>
+          <input type="text" id="playerNick" placeholder="(opcjonalnie)" maxlength="20"
+                 style="flex:1;" />
+        </div>
+
+        <hr class="section-sep" />
+
+        <!-- Zakładki poziomów -->
+        <div class="level-selector" style="margin-bottom:10px;">
+          <button class="level-btn active" id="lbTab1" onclick="onLbTab(1)">Poziom 1</button>
+          <button class="level-btn"        id="lbTab2" onclick="onLbTab(2)">Poziom 2</button>
+          <button class="level-btn"        id="lbTab3" onclick="onLbTab(3)">Poziom 3</button>
+        </div>
+
+        <!-- Tabela -->
+        <table class="lb-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nick</th>
+              <th>Wynik</th>
+              <th>Czas</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="lbBody">
+            <tr><td colspan="5" style="color:var(--text-dim);text-align:center;">Brak wyników</td></tr>
+          </tbody>
+        </table>
+
+        <div style="font-size:0.65rem;color:var(--text-dim);margin-top:8px;line-height:1.6;">
+          Wynik jest zapisywany automatycznie po ukończeniu poziomu.<br>
+          Brak nicku → automatyczna nazwa Guest_N.
+        </div>
+
+      </div>
+    </div><!-- /leaderboardPanel -->
+
+  </div><!-- /control-column -->
+</div><!-- /page-wrapper -->
+
+<!-- ═══════════════════════════════ FOOTER ══════════════════════════════════ -->
+<footer>
+  Pac-Man DQN &nbsp;·&nbsp; PyTorch &nbsp;·&nbsp; Flask REST API &nbsp;·&nbsp;
+  Architektura: 15 → 256 → 128 → 64 → 4 &nbsp;·&nbsp;
+  ε-greedy &nbsp;·&nbsp; Experience Replay &nbsp;·&nbsp; Target Network (N=100)
+</footer>
+
+<script src="game.js"></script>
+</body>
+</html>

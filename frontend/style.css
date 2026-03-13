@@ -1,0 +1,1077 @@
+/* ============================================================================
+   PAC-MAN DQN — STYLE  /  Synthwave Retro-Arcade
+   Układ: standardowy scroll strony, wszystko widoczne bez przycinania.
+   ============================================================================ */
+
+/* --------------------------------------------------------------------------
+   ZMIENNE
+   -------------------------------------------------------------------------- */
+:root {
+  --bg-void:     #04040f;
+  --bg-deep:     #08081e;
+  --bg-panel:    #0d0d24;
+  --bg-card:     #12122e;
+  --bg-inset:    #09091f;
+
+  --pink:        #e8208a;
+  --cyan:        #00c8d8;
+  --yellow:      #f0d400;
+  --green:       #00dd74;
+  --red:         #f02040;
+  --purple:      #9933ee;
+  --orange:      #f07800;
+
+  --border:      rgba(0,200,216,0.14);
+  --border-pink: rgba(232,32,138,0.32);
+
+  --text-hi:     #eeeeff;
+  --text-mid:    #8899cc;
+  --text-dim:    #555878;
+}
+
+/* --------------------------------------------------------------------------
+   RESET
+   -------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--bg-void);
+  color: var(--text-hi);
+  font-family: 'Courier New', Courier, monospace;
+  /* siatka + gradient atmosferyczny — tylko tło, nie wpływa na layout */
+  background-image:
+    linear-gradient(rgba(0,245,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,245,255,0.035) 1px, transparent 1px),
+    radial-gradient(ellipse 90% 55% at 50% 0%,   rgba(90,0,130,0.5)  0%, transparent 65%),
+    radial-gradient(ellipse 60% 35% at 50% 100%,  rgba(0,50,90,0.35)  0%, transparent 65%);
+  background-size: 38px 38px, 38px 38px, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+}
+
+/* --------------------------------------------------------------------------
+   HEADER
+   -------------------------------------------------------------------------- */
+header {
+  text-align: center;
+  padding: 22px 24px 14px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(to bottom, rgba(80,0,130,0.35) 0%, transparent 100%);
+}
+
+header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%, var(--pink) 25%, var(--cyan) 75%, transparent 100%);
+  box-shadow: 0 0 12px var(--pink), 0 0 24px var(--cyan);
+}
+
+.logo {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 8px;
+  background: linear-gradient(100deg, var(--pink) 0%, var(--cyan) 55%, var(--yellow) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 10px rgba(255,45,155,0.55));
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 0.7rem;
+  color: var(--text-mid);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+   GŁÓWNY UKŁAD — DWIE KOLUMNY, NORMALNY SCROLL
+   Kluczowe: brak height/overflow na kolumnach — cała strona scrolluje.
+   -------------------------------------------------------------------------- */
+.page-wrapper {
+  display: flex;
+  gap: 20px;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  align-items: flex-start;   /* kolumny wyrównane do góry, nie rozciągają się */
+}
+
+/* Lewa kolumna: canvas + HUD */
+.game-column {
+  flex: 0 0 auto;
+  width: 570px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Prawa kolumna: WSZYSTKIE panele w normalnym flow — brak overflow/height! */
+.control-column {
+  flex: 1 1 auto;
+  min-width: 320px;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   CANVAS — neonowa ramka + CRT efekt
+   -------------------------------------------------------------------------- */
+.canvas-frame {
+  position: relative;
+  display: block;
+  width: 570px;
+}
+
+/* ramka z gradientem */
+.canvas-frame::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
+  z-index: 0;
+  opacity: 0.8;
+  animation: frame-glow 3s ease-in-out infinite;
+}
+
+.canvas-frame::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 6px;
+  background: var(--bg-void);
+  z-index: 1;
+}
+
+@keyframes frame-glow {
+  0%, 100% { opacity: 0.65; }
+  50%       { opacity: 1.0; }
+}
+
+#gameCanvas {
+  display: block;
+  position: relative;
+  z-index: 2;
+  border-radius: 4px;
+  width: 570px;
+  height: 570px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px
+  );
+}
+
+/* --------------------------------------------------------------------------
+   HUD
+   -------------------------------------------------------------------------- */
+.hud {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--cyan);
+  border-radius: 5px;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.hud-label {
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.hud-value {
+  font-size: 0.92rem;
+  font-weight: bold;
+  color: var(--cyan);
+  white-space: nowrap;
+}
+.hud-value.yellow { color: var(--yellow); }
+.hud-value.green  { color: var(--green);  }
+.hud-value.pink   { color: var(--pink);   }
+
+/* --------------------------------------------------------------------------
+   STATUS BAR
+   -------------------------------------------------------------------------- */
+.status-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--pink);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 0.7rem;
+  color: var(--text-mid);
+  min-height: 28px;
+}
+
+.status-bar::before { content: '▸'; color: var(--pink); flex-shrink: 0; }
+
+/* --------------------------------------------------------------------------
+   PANELE
+   -------------------------------------------------------------------------- */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: visible;           /* NIE ukrywaj zawartości */
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
+  font-size: 0.72rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  position: relative;
+}
+
+.panel-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0; width: 3px;
+  border-radius: 8px 0 0 0;
+  background: linear-gradient(to bottom, var(--pink), var(--cyan));
+}
+
+.panel-header .ml-auto { margin-left: auto; }
+
+.panel-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   PRZEŁĄCZNIK TRYBU
+   -------------------------------------------------------------------------- */
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mode-btn {
+  padding: 9px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-mid);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mode-btn:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(0,245,255,0.05);
+}
+.mode-btn.active {
+  background: linear-gradient(135deg, rgba(255,45,155,0.18), rgba(0,245,255,0.12));
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0,245,255,0.25);
+}
+
+/* --------------------------------------------------------------------------
+   PRZYCISKI
+   -------------------------------------------------------------------------- */
+.btn {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-hi);
+  font-family: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.btn:hover    { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.06); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-primary {
+  background: rgba(255,45,155,0.14);
+  border-color: var(--pink);
+  color: var(--pink);
+}
+.btn-primary:hover { background: rgba(255,45,155,0.26); box-shadow: 0 0 10px rgba(255,45,155,0.35); }
+
+.btn-danger {
+  background: rgba(255,34,68,0.14);
+  border-color: var(--red);
+  color: var(--red);
+}
+.btn-danger:hover { background: rgba(255,34,68,0.26); }
+
+.btn-success {
+  background: rgba(0,255,136,0.1);
+  border-color: var(--green);
+  color: var(--green);
+}
+.btn-success:hover { background: rgba(0,255,136,0.22); box-shadow: 0 0 10px rgba(0,255,136,0.3); }
+
+.btn-row {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.btn-row .btn { flex: 1; min-width: 70px; text-align: center; }
+
+/* --------------------------------------------------------------------------
+   TOGGLE SWITCH
+   -------------------------------------------------------------------------- */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+}
+.toggle-label { font-size: 0.74rem; color: var(--text-mid); flex: 1; }
+
+.toggle-switch { position: relative; display: inline-block; width: 42px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { display: none; }
+
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  left: 3px; top: 3px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: rgba(0,245,255,0.15);
+  border-color: var(--cyan);
+}
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
+}
+
+/* --------------------------------------------------------------------------
+   INPUTY / SELECT
+   -------------------------------------------------------------------------- */
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.input-row label {
+  font-size: 0.74rem;
+  color: var(--text-mid);
+  min-width: 76px;
+  flex-shrink: 0;
+}
+.input-row input,
+.input-row select {
+  flex: 1;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-hi);
+  font-family: inherit;
+  font-size: 0.74rem;
+  padding: 6px 8px;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+.input-row input:focus,
+.input-row select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,245,255,0.1); }
+.input-row select option { background: var(--bg-card); }
+
+/* --------------------------------------------------------------------------
+   PASEK POSTĘPU
+   -------------------------------------------------------------------------- */
+.progress-wrap { display: flex; flex-direction: column; gap: 5px; }
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.67rem;
+  color: var(--text-mid);
+}
+
+.progress-track {
+  height: 8px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--pink), var(--cyan));
+  border-radius: 4px;
+  transition: width 0.6s ease;
+  box-shadow: 0 0 8px rgba(0,245,255,0.45);
+}
+
+.progress-label {
+  text-align: center;
+  font-size: 0.67rem;
+  color: var(--text-mid);
+}
+
+/* --------------------------------------------------------------------------
+   STAT CARDS
+   -------------------------------------------------------------------------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 7px;
+}
+
+.stat-card {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 10px;
+}
+
+.stat-label {
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.stat-value {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--cyan);
+}
+.stat-value.yellow { color: var(--yellow); }
+.stat-value.green  { color: var(--green);  }
+.stat-value.pink   { color: var(--pink);   }
+.stat-value.orange { color: var(--orange); }
+
+/* --------------------------------------------------------------------------
+   LOG EPIZODÓW
+   -------------------------------------------------------------------------- */
+.log-wrap { display: flex; flex-direction: column; gap: 5px; }
+
+.log-title {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.log-box {
+  height: 170px;
+  overflow-y: auto;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 7px 9px;
+  font-size: 0.68rem;
+  line-height: 1.7;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,245,255,0.18) transparent;
+}
+.log-box::-webkit-scrollbar { width: 3px; }
+.log-box::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.22); border-radius: 2px; }
+
+.log-entry {
+  padding: 1px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  color: var(--text-mid);
+}
+.l-ep     { color: var(--cyan); }
+.l-r      { color: var(--yellow); }
+.l-eps    { color: var(--pink); }
+.l-caught { color: var(--green); }
+.l-miss   { color: var(--text-dim); }
+
+/* --------------------------------------------------------------------------
+   Q-WARTOŚCI
+   -------------------------------------------------------------------------- */
+.q-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.q-cell {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 3px;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.q-cell.best {
+  border-color: var(--yellow);
+  background: rgba(255,230,0,0.09);
+  box-shadow: 0 0 8px rgba(255,230,0,0.2);
+}
+
+.q-name {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+}
+
+.q-val {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--text-mid);
+}
+.q-cell.best .q-val { color: var(--yellow); }
+
+/* --------------------------------------------------------------------------
+   KLAWISZE
+   -------------------------------------------------------------------------- */
+.kbd-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.kbd-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  background: var(--bg-inset);
+  border: 1px solid rgba(0,245,255,0.2);
+  border-bottom: 2px solid rgba(0,245,255,0.35);
+  border-radius: 5px;
+  font-size: 0.72rem;
+  color: var(--text-mid);
+  font-weight: bold;
+  user-select: none;
+  transition: all 0.12s;
+}
+
+.kbd.active {
+  background: rgba(255,45,155,0.18);
+  border-color: var(--pink);
+  border-bottom-color: var(--pink);
+  color: var(--pink);
+  box-shadow: 0 0 10px rgba(255,45,155,0.4);
+  transform: translateY(1px);
+}
+
+.kbd-hint-text {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   POZIOMY
+   -------------------------------------------------------------------------- */
+.level-selector { display: flex; gap: 6px; }
+
+.level-btn {
+  flex: 1;
+  padding: 6px 4px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-mid);
+  font-family: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.level-btn:hover  { border-color: var(--yellow); color: var(--yellow); }
+.level-btn.active {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  background: rgba(255,230,0,0.08);
+  box-shadow: 0 0 6px rgba(255,230,0,0.2);
+}
+
+/* --------------------------------------------------------------------------
+   BADGE
+   -------------------------------------------------------------------------- */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.6rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.badge-training {
+  background: rgba(0,255,136,0.12);
+  color: var(--green);
+  border: 1px solid rgba(0,255,136,0.4);
+  animation: pulse-green 1.4s ease-in-out infinite;
+}
+.badge-idle { background: rgba(50,50,80,0.4); color: var(--text-dim); border: 1px solid var(--border); }
+.badge-done { background: rgba(0,245,255,0.1); color: var(--cyan); border: 1px solid rgba(0,245,255,0.3); }
+
+/* --------------------------------------------------------------------------
+   OPIS AKADEMICKI
+   -------------------------------------------------------------------------- */
+.academic-body {
+  font-size: 0.71rem;
+  color: var(--text-mid);
+  line-height: 1.75;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.academic-body strong.hi  { color: var(--cyan); }
+.academic-body strong.key { color: var(--yellow); }
+
+.formula-box {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--purple);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 0.76rem;
+  color: #cc99ff;
+  letter-spacing: 0.5px;
+}
+
+/* --------------------------------------------------------------------------
+   LEGENDA
+   -------------------------------------------------------------------------- */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+/* --------------------------------------------------------------------------
+   SEPARATOR (w sekcjach)
+   -------------------------------------------------------------------------- */
+.section-sep {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2px 0;
+}
+
+/* --------------------------------------------------------------------------
+   STOPKA
+   -------------------------------------------------------------------------- */
+footer {
+  text-align: center;
+  padding: 14px 24px;
+  font-size: 0.64rem;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(to top, rgba(80,0,130,0.12), transparent);
+}
+
+/* --------------------------------------------------------------------------
+   ANIMACJE
+   -------------------------------------------------------------------------- */
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 3px rgba(0,255,136,0.25); }
+  50%       { box-shadow: 0 0 10px rgba(0,255,136,0.65); }
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSYWNOŚĆ
+   -------------------------------------------------------------------------- */
+@media (max-width: 1020px) {
+  .page-wrapper {
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 14px 40px;
+  }
+
+  .game-column,
+  .canvas-frame,
+  #gameCanvas {
+    width: 100%;
+    max-width: 570px;
+  }
+
+  #gameCanvas { height: auto; }
+
+  .control-column {
+    width: 100%;
+    max-width: 570px;
+  }
+}
+
+@media (max-width: 600px) {
+  .logo      { font-size: 1.7rem; letter-spacing: 4px; }
+  .hud       { gap: 6px; }
+  .hud-value { font-size: 0.82rem; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* --------------------------------------------------------------------------
+   PANEL INSTRUKCJI OBSŁUGI
+   -------------------------------------------------------------------------- */
+
+/* Nagłówek sekcji instrukcji z numerem */
+.guide-section-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 14px 0 8px;
+  font-size: 0.72rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--cyan);
+}
+.guide-section-head:first-child { margin-top: 0; }
+
+.guide-section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cyan);
+  color: #04040f;
+  font-size: 0.65rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+/* Lista kroków */
+.guide-steps {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.guide-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.7rem;
+  line-height: 1.55;
+  color: var(--text-hi);
+}
+
+.guide-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-mid);
+  font-size: 0.6rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.guide-step-text { flex: 1; }
+
+.guide-step-text code {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 0.68rem;
+  color: var(--yellow);
+}
+
+/* Ramka notatki */
+.guide-note {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--yellow);
+  border-radius: 5px;
+  padding: 8px 11px;
+  font-size: 0.67rem;
+  color: var(--text-mid);
+  line-height: 1.6;
+  margin: 6px 0;
+}
+
+.guide-note strong { color: var(--yellow); }
+
+/* Tabela parametrów */
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.67rem;
+  margin: 6px 0;
+}
+
+.guide-table tr { border-bottom: 1px solid var(--border); }
+.guide-table tr:last-child { border-bottom: none; }
+
+.guide-table td {
+  padding: 5px 7px;
+  vertical-align: top;
+  line-height: 1.55;
+}
+
+.guide-table td:first-child {
+  color: var(--cyan);
+  white-space: nowrap;
+  min-width: 90px;
+  font-weight: bold;
+}
+
+.guide-table td:last-child { color: var(--text-mid); }
+
+/* Schemat przepływu (flow chart tekstowy) */
+.guide-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin: 7px 0;
+  padding: 8px 11px;
+  background: var(--bg-inset);
+  border-radius: 5px;
+  border: 1px solid var(--border);
+}
+
+.guide-flow-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-pink);
+  border-radius: 4px;
+  padding: 3px 8px;
+  color: var(--text-hi);
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
+.guide-flow-arrow {
+  color: var(--pink);
+  font-size: 0.7rem;
+}
+
+/* Collapsible — kliknięcie w nagłówek chowa/pokazuje ciało */
+.guide-collapsible .panel-body { display: none; }
+.guide-collapsible.open .panel-body { display: block; }
+.guide-collapsible .panel-header { cursor: pointer; user-select: none; }
+.guide-collapsible .panel-header:hover { background: rgba(0,245,255,0.06); }
+
+.guide-toggle-icon {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--text-mid);
+  transition: transform 0.2s;
+}
+.guide-collapsible.open .guide-toggle-icon { transform: rotate(180deg); }
+
+/* --------------------------------------------------------------------------
+   PRZEŁĄCZNIK MOTYWU — w headerze
+   -------------------------------------------------------------------------- */
+.theme-toggle-wrap {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+}
+
+.theme-icon {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+  user-select: none;
+  transition: color 0.2s;
+}
+
+/* Mały toggle (38×20) dla headera */
+.theme-toggle-switch { width: 38px; height: 20px; }
+.theme-toggle-switch .toggle-slider { border-radius: 10px; }
+.theme-toggle-switch .toggle-slider::before { width: 12px; height: 12px; left: 3px; top: 3px; }
+.theme-toggle-switch input:checked + .toggle-slider {
+  background: rgba(255,230,0,0.18);
+  border-color: var(--yellow);
+}
+.theme-toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+  background: var(--yellow);
+  box-shadow: 0 0 6px var(--yellow);
+}
+
+/* --------------------------------------------------------------------------
+   TABLICA WYNIKÓW
+   -------------------------------------------------------------------------- */
+#playerNick::placeholder { color: var(--text-dim); opacity: 1; }
+
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+}
+
+.lb-table th {
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.58rem;
+  padding: 4px 5px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.lb-table td {
+  padding: 5px 5px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-mid);
+  vertical-align: middle;
+}
+
+.lb-table tr.lb-gold   td { color: #ffd700; font-weight: bold; }
+.lb-table tr.lb-silver td { color: #c0c0c0; font-weight: bold; }
+.lb-table tr.lb-bronze td { color: #cd7f32; font-weight: bold; }
+.lb-table tr.lb-normal td { color: #888899; }
+
+.lb-table td:nth-child(3) { color: var(--green); font-weight: bold; }
+.lb-table td:nth-child(1) { color: var(--text-dim); width: 22px; }
+
+.lb-highlight td { background: rgba(0,200,100,0.08); }
+
+/* --------------------------------------------------------------------------
+   TRYB JASNY — nadpisanie zmiennych i wybranych gradientów
+   -------------------------------------------------------------------------- */
+[data-theme="light"] {
+  --bg-void:     #eef0f8;
+  --bg-deep:     #e4e8f4;
+  --bg-panel:    #ffffff;
+  --bg-card:     #f0f2fb;
+  --bg-inset:    #e4e8f5;
+  --border:      rgba(40, 50, 120, 0.28);
+  --border-pink: rgba(160, 0, 80, 0.32);
+
+  --text-hi:     #08081a;
+  --text-mid:    #1a2252;
+  --text-dim:    #3a468a;
+
+  /* Akcenty przyciemnione do czytelności na jasnym tle */
+  --cyan:        #0055aa;
+  --pink:        #b80060;
+  --green:       #006b3c;
+  --yellow:      #7a5c00;
+  --red:         #bb0022;
+  --purple:      #5500bb;
+  --orange:      #944400;
+}
+
+[data-theme="light"] body {
+  background-image:
+    linear-gradient(rgba(100, 80, 200, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 80, 200, 0.05) 1px, transparent 1px),
+    radial-gradient(ellipse 90% 55% at 50% 0%,  rgba(180, 150, 230, 0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 35% at 50% 100%, rgba(150, 180, 220, 0.12) 0%, transparent 65%);
+}
+
+[data-theme="light"] header {
+  background: linear-gradient(to bottom, rgba(190, 160, 240, 0.15) 0%, transparent 100%);
+}
+
+[data-theme="light"] footer {
+  background: linear-gradient(to top, rgba(190, 160, 240, 0.08), transparent);
+}
+
+[data-theme="light"] .logo {
+  filter: drop-shadow(0 0 8px rgba(200, 30, 120, 0.3));
+}
+
+[data-theme="light"] .scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(0, 0, 0, 0.018) 3px, rgba(0, 0, 0, 0.018) 4px
+  );
+}

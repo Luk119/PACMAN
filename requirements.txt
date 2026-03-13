@@ -1,0 +1,17 @@
+# =============================================================================
+# WYMAGANIA PYTHON – PAC-MAN DQN
+# =============================================================================
+# Instalacja: pip install -r requirements.txt
+#
+# Wersje minimalne przetestowane na Python 3.10+
+
+# --- Serwer web ---
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# --- Uczenie maszynowe ---
+torch>=2.1.0          # PyTorch: sieć neuronowa DQN
+numpy>=1.26.0         # operacje na tablicach
+
+# --- Opcjonalne (wykres treningu) ---
+matplotlib>=3.8.0     # wykres reward vs epizod (endpoint /training_plot)
