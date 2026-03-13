@@ -444,6 +444,8 @@ def training_plot():
     success   = trainer.save_plot(path=plot_path)
     if success:
         return send_file(plot_path, mimetype="image/png")
+    if os.path.exists(plot_path):
+        return send_file(plot_path, mimetype="image/png")
     return jsonify({"error": "Brak danych treningu lub brak matplotlib."}), 404
 
 

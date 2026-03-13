@@ -69,7 +69,7 @@
     </div>
 
     <!-- Status -->
-    <div class="status-bar" id="statusBar">Łączenie z serwerem…</div>
+    <div class="status-bar" id="statusBar"></div>
 
   </div><!-- /game-column -->
 
@@ -87,18 +87,11 @@
       <div class="panel-body">
         <div class="mode-toggle">
           <button class="mode-btn active" id="btnModePlay"
-                  onclick="setMode('play')">▶&nbsp; Gra interaktywna</button>
+                  onclick="setMode('play')"><span style="font-size:1.5em;">▶</span>&nbsp; Gra interaktywna</button>
           <button class="mode-btn" id="btnModeTrain"
-                  onclick="setMode('train')">⚙&nbsp; Panel treningu</button>
+                  onclick="setMode('train')"><span style="font-size:1.8em;">⚙</span>&nbsp; Panel treningu</button>
         </div>
 
-        <hr class="section-sep" />
-        <div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;
-                    letter-spacing:1.5px;margin-bottom:5px;">Widok</div>
-        <div class="mode-toggle">
-          <button class="mode-btn" id="btnToggleDetails"
-                  onclick="setDetailsView(!App.detailsOn)">📊&nbsp; Dane live</button>
-        </div>
       </div>
     </div>
 
@@ -111,8 +104,6 @@
 
         <!-- Poziomy -->
         <div>
-          <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:7px;
-                      text-transform:uppercase;letter-spacing:1.5px;">Poziom labiryntu</div>
           <div class="level-selector">
             <button class="level-btn active" onclick="onLevelSelect(1)">Poziom 1</button>
             <button class="level-btn"        onclick="onLevelSelect(2)">Poziom 2</button>
@@ -123,24 +114,31 @@
         <hr class="section-sep" />
 
         <!-- Klawisze -->
+        <div style="font-size:0.6rem;color:var(--text-mid);text-transform:uppercase;
+                    letter-spacing:1.5px;margin-bottom:5px;">Sterowanie</div>
         <div class="kbd-hint">
-          <div class="kbd-row">
-            <div style="width:34px;"></div>
-            <div class="kbd" id="keyW">W</div>
-            <div style="width:6px;"></div>
-            <div style="width:34px;"></div>
-            <div class="kbd" id="keyUP">↑</div>
+          <div style="display:flex;gap:16px;justify-content:center;">
+            <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
+              <div style="display:flex;gap:4px;">
+                <div class="kbd" id="keyW">W</div>
+              </div>
+              <div style="display:flex;gap:4px;">
+                <div class="kbd" id="keyA">A</div>
+                <div class="kbd" id="keyS">S</div>
+                <div class="kbd" id="keyD">D</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
+              <div style="display:flex;gap:4px;">
+                <div class="kbd" id="keyUP">↑</div>
+              </div>
+              <div style="display:flex;gap:4px;">
+                <div class="kbd" id="keyLEFT">←</div>
+                <div class="kbd" id="keyDOWN">↓</div>
+                <div class="kbd" id="keyRIGHT">→</div>
+              </div>
+            </div>
           </div>
-          <div class="kbd-row">
-            <div class="kbd" id="keyA">A</div>
-            <div class="kbd" id="keyS">S</div>
-            <div class="kbd" id="keyD">D</div>
-            <div style="width:6px;"></div>
-            <div class="kbd" id="keyLEFT">←</div>
-            <div class="kbd" id="keyDOWN">↓</div>
-            <div class="kbd" id="keyRIGHT">→</div>
-          </div>
-          <div class="kbd-hint-text">WASD lub strzałki &nbsp;·&nbsp; [P] = start &nbsp;·&nbsp; [R] = reset</div>
         </div>
 
         <hr class="section-sep" />
@@ -158,6 +156,16 @@
           <label class="toggle-switch">
             <input type="checkbox" id="toggleOnline"
                    onchange="onToggleOnlineLearning(this)" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <!-- Dane live -->
+        <div class="toggle-row">
+          <span class="toggle-label">Dane live</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="btnToggleDetails"
+                   onchange="setDetailsView(this.checked)" />
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -188,11 +196,8 @@
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
             <div>
               <div style="font-size:0.72rem;font-weight:bold;color:var(--green);
-                          text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px;">
-                👁 Podgląd na żywo
-              </div>
-              <div style="font-size:0.67rem;color:var(--text-dim);">
-                Canvas pokazuje środowisko treningowe (~8 fps)
+                          text-transform:uppercase;letter-spacing:1.5px;">
+                Podgląd na żywo
               </div>
             </div>
             <label class="toggle-switch" style="flex-shrink:0;">
@@ -203,7 +208,6 @@
           </div>
           <div id="liveWatchStatus"
                style="font-size:0.68rem;color:var(--text-dim);font-family:'Courier New',monospace;">
-            Włącz, aby obserwować uczenie się duszka w czasie rzeczywistym
           </div>
         </div>
 
@@ -217,9 +221,9 @@
         <div class="input-row">
           <label>Poziom:</label>
           <select id="trainLevel">
-            <option value="1">Poziom 1 – klasyczny</option>
-            <option value="2">Poziom 2 – trudniejszy</option>
-            <option value="3">Poziom 3 – najtrudniejszy</option>
+            <option value="1">Poziom 1</option>
+            <option value="2">Poziom 2</option>
+            <option value="3">Poziom 3</option>
           </select>
         </div>
 
@@ -283,23 +287,6 @@
           <button class="btn" onclick="onOpenPlot()">📈 Wykres postępu</button>
         </div>
 
-        <hr class="section-sep" />
-
-        <!-- Log epizodów -->
-        <div class="log-wrap">
-          <div class="log-title">Log epizodów (najnowsze na górze)</div>
-          <div class="log-box" id="trainLog">
-            <span style="color:var(--text-dim);">Uruchom trening, aby zobaczyć logi…</span>
-          </div>
-        </div>
-
-        <!-- Opis trybu -->
-        <div style="font-size:0.68rem;color:var(--text-dim);line-height:1.7;
-                    padding-top:8px;border-top:1px solid var(--border);">
-          <strong style="color:var(--text-mid);">Tryb automatyczny:</strong>
-          Pac-Man ucieka heurystycznie. Duszek uczy się przez DQN (ε-greedy).
-          Trening działa w wątku tła — możesz grać równocześnie.
-        </div>
 
       </div>
     </div><!-- /trainPanel -->
@@ -343,10 +330,6 @@
           </tbody>
         </table>
 
-        <div style="font-size:0.65rem;color:var(--text-dim);margin-top:8px;line-height:1.6;">
-          Wynik jest zapisywany automatycznie po ukończeniu poziomu.<br>
-          Brak nicku → automatyczna nazwa Guest_N.
-        </div>
 
       </div>
     </div><!-- /leaderboardPanel -->

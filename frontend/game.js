@@ -122,7 +122,6 @@ async function initGame(level = 1) {
     updateHUD(data);
     render();
     drawWaitForStartOverlay();
-    setStatus("Naciśnij [P] lub kliknij START aby rozpocząć grę.");
   } catch (e) {
     setStatus("❌ Błąd połączenia z backendem: " + e.message);
   }
@@ -197,7 +196,6 @@ function handleGameOver(data) {
   const isWin = data.game_won;
   const msg   = isWin ? "PAC-MAN WYGRYWA!" : "DUSZEK ZŁAPAŁ PAC-MANA!";
   drawGameOverOverlay(msg, isWin);
-  setStatus(`${msg} Wynik: ${data.score} | Naciśnij R lub kliknij Reset`);
 
   // Zapisz wynik na tablicy (wygrana i przegrana)
   if (!App.scoreSubmitted) {
@@ -485,7 +483,6 @@ function startGame() {
   App.gameStarted   = true;
   App.gameStartTime = Date.now();
   render();   // usuń nakładkę
-  setStatus("Gra trwa — steruj Pac-Manem strzałkami lub WASD.");
 }
 
 /** Nakładka GAME OVER / WIN na canvasie */
@@ -636,13 +633,18 @@ function setMode(mode) {
   if (qPanel)     qPanel.style.display     = (showPlay && App.analysisOn) ? "block" : "none";
   if (trainPanel) trainPanel.style.display = showTrain ? "block" : "none";
 
+  const leaderboardPanel = document.getElementById("leaderboardPanel");
+  if (leaderboardPanel) leaderboardPanel.style.display = showPlay ? "block" : "none";
+
+  const hud = document.querySelector(".hud");
+  if (hud) hud.style.display = showPlay ? "flex" : "none";
+
   if (mode === "play") {
     stopLivePolling();
     startGameLoop();
     stopTrainPolling();
     // Wróć do canvasa gry (pobierz aktualny stan)
     apiGet("/game_state").then(d => { updateGameState(d); render(); }).catch(() => {});
-    setStatus("Tryb gry — steruj Pac-Manem strzałkami lub WASD.");
   } else {
     stopGameLoop();
     startTrainPolling();
@@ -909,9 +911,11 @@ async function onToggleOnlineLearning(checkbox) {
   try {
     const data = await apiPost("/toggle_online_learn", { enabled: checkbox.checked });
     const isOn = data.online_learning_enabled;
-    setStatus(isOn
-      ? "✅ Uczenie online WŁĄCZONE – duszek uczy się podczas gry."
-      : "🔇 Uczenie online WYŁĄCZONE – duszek tylko używa modelu.");
+    const olBadge = document.getElementById("onlineLearningBadge");
+    if (olBadge) {
+      olBadge.textContent = isOn ? "ON" : "OFF";
+      olBadge.className   = "badge " + (isOn ? "badge-training" : "badge-idle");
+    }
   } catch (e) {
     setStatus("❌ Błąd toggle: " + e.message);
   }
@@ -948,7 +952,8 @@ function initViewMode() {
 function setDetailsView(on) {
   App.detailsOn = on;
   localStorage.setItem("details", on ? "1" : "0");
-  document.getElementById("btnToggleDetails")?.classList.toggle("active", on);
+  const toggleEl = document.getElementById("btnToggleDetails");
+  if (toggleEl) toggleEl.checked = on;
   document.querySelectorAll(".hud-detail").forEach(el => {
     el.style.display = on ? "flex" : "none";
   });
@@ -1006,7 +1011,6 @@ async function submitScore(score, level, timeSec) {
   const nick = (document.getElementById("playerNick")?.value ?? "").trim();
   try {
     const data = await apiPost("/scores", { nick, score, level, time: timeSec });
-    setStatus(`🏆 Wynik zapisany na tablicy! Nick: ${data.nick} | Wynik: ${score} | Czas: ${timeSec.toFixed(1)}s`);
     App.lbLevel = level;
     updateLbTabs(level);
     await fetchLeaderboard(level);   // odśwież tablicę + placeholder
@@ -1051,7 +1055,7 @@ function renderLeaderboard(level, scores) {
     const rankCls = medalClass[i] ?? "lb-normal";
     const cls     = isMe ? `${rankCls} lb-highlight` : rankCls;
     return `<tr class="${cls}">
-      <td>${i + 1}</td>
+      <td>${i === 0 ? '<span style="position:relative;left:-3px;">🏆</span>' : i + 1}</td>
       <td>${escHtml(entry.nick)}</td>
       <td>${entry.score}</td>
       <td>${timeStr}</td>
@@ -1094,11 +1098,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Rysuj pusty ekran podczas łączenia
   ctx.fillStyle = canvasPalette().bg;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-  ctx.fillStyle = canvasPalette().dot;
-  ctx.font      = "18px Courier New";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Łączenie z serwerem...", CANVAS_W / 2, CANVAS_H / 2);
 
   await initGame(1);
   startGameLoop();

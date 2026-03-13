@@ -210,7 +210,7 @@ header::after {
 
 .hud-label {
   font-size: 0.58rem;
-  color: var(--text-dim);
+  color: var(--text-mid);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -244,7 +244,7 @@ header::after {
   min-height: 28px;
 }
 
-.status-bar::before { content: '▸'; color: var(--pink); flex-shrink: 0; }
+.status-bar:empty { display: none; }
 
 /* --------------------------------------------------------------------------
    PANELE
@@ -389,8 +389,8 @@ header::after {
 
 .toggle-slider {
   position: absolute; inset: 0;
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.25);
   border-radius: 11px;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
@@ -400,7 +400,7 @@ header::after {
   position: absolute;
   width: 14px; height: 14px;
   left: 3px; top: 3px;
-  background: var(--text-dim);
+  background: rgba(255,255,255,0.55);
   border-radius: 50%;
   transition: transform 0.2s, background 0.2s;
 }
@@ -721,7 +721,7 @@ header::after {
   padding-top: 8px;
   border-top: 1px solid var(--border);
   font-size: 0.68rem;
-  color: var(--text-dim);
+  color: var(--text-mid);
   line-height: 1.8;
 }
 
