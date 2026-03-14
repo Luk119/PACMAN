@@ -501,9 +501,16 @@ function drawGameOverOverlay(message, isWin, p) {
   ctx.fillText(message, CANVAS_W / 2, CANVAS_H / 2 - 20);
 
   ctx.shadowBlur  = 0;
-  ctx.font        = "bold 16px 'Courier New', monospace";
-  ctx.fillStyle   = p.light ? "#1a2252" : "#aaaacc";
-  ctx.fillText("Naciśnij [R] lub kliknij Reset", CANVAS_W / 2, CANVAS_H / 2 + 24);
+  const score   = App.gameState?.score ?? 0;
+  const elapsed = App.gameStartTime ? (Date.now() - App.gameStartTime) / 1000 : 0;
+  const timeStr = formatTime(elapsed);
+  ctx.font      = "bold 16px 'Courier New', monospace";
+  ctx.fillStyle = p.light ? "#1a2252" : "#ffbb33";
+  ctx.fillText(`Wynik: ${score}   Czas: ${timeStr}`, CANVAS_W / 2, CANVAS_H / 2 + 18);
+
+  ctx.font      = "13px 'Courier New', monospace";
+  ctx.fillStyle = p.light ? "#445" : "#aaaacc";
+  ctx.fillText("Naciśnij [R] lub kliknij Reset", CANVAS_W / 2, CANVAS_H / 2 + 44);
 }
 
 // ---------------------------------------------------------------------------
@@ -1059,7 +1066,7 @@ function renderLeaderboard(level, scores) {
       <td>${escHtml(entry.nick)}</td>
       <td>${entry.score}</td>
       <td>${timeStr}</td>
-      <td style="color:var(--text-dim);font-size:0.62rem;">${entry.date ?? ""}</td>
+      <td style="color:var(--text-mid);font-size:0.68rem;">${entry.date ?? ""}</td>
     </tr>`;
   }).join("");
 }
