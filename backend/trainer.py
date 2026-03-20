@@ -87,8 +87,9 @@ class Trainer:
         self.session_id: int = 0
 
         # Statystyki bieżące (szybki dostęp przez API)
-        self.best_reward:   float = float("-inf")
+        self.best_reward:    float = float("-inf")
         self.recent_rewards: list[float] = []  # ostatnie 100 epizodów
+        self.recent_wins:    list[int]   = []  # 0/1 per epizod, ostatnie 100
 
         # Wątek treningu
         self._thread: threading.Thread | None = None
@@ -171,6 +172,7 @@ class Trainer:
             step         = 0
             done         = False
             caught       = False   # czy duszek złapał Pac-Mana
+            pacman_won   = False   # czy Pac-Man wygrał (zebrał wszystkie punkty)
 
             # --- PĘTLA KROKÓW EPIZODU --------------------------------------
             while not done and step < self.max_steps_per_ep:
@@ -188,6 +190,10 @@ class Trainer:
                 # Sprawdź czy duszek złapał
                 if info.get("caught_pacman"):
                     caught = True
+
+                # Sprawdź czy Pac-Man wygrał
+                if info.get("reason") == "pacman_won":
+                    pacman_won = True
 
                 # Aktualizuj podgląd na żywo (bez blokady – odczyt jest tolerancyjny)
                 gs = env.get_game_state()
@@ -217,13 +223,14 @@ class Trainer:
 
                 # Zapis loga epizodu
                 log_entry = {
-                    "episode":  ep,
-                    "reward":   round(total_reward, 2),
-                    "epsilon":  round(self.agent.epsilon, 4),
-                    "steps":    step,
-                    "caught":   caught,
-                    "avg_loss": round(self.agent.avg_loss, 6),
-                    "session":  self.session_id,
+                    "episode":     ep,
+                    "reward":      round(total_reward, 2),
+                    "epsilon":     round(self.agent.epsilon, 4),
+                    "steps":       step,
+                    "caught":      caught,
+                    "pacman_won":  pacman_won,
+                    "avg_loss":    round(self.agent.avg_loss, 6),
+                    "session":     self.session_id,
                 }
                 self.episode_logs.append(log_entry)
 
@@ -236,18 +243,28 @@ class Trainer:
                 if len(self.recent_rewards) > 100:
                     self.recent_rewards.pop(0)
 
+                # Okno ruchome wygranych ducha (win rate)
+                self.recent_wins.append(1 if caught else 0)
+                if len(self.recent_wins) > 100:
+                    self.recent_wins.pop(0)
+
             # --- LOGOWANIE DO KONSOLI --------------------------------------
             if ep % self.log_interval == 0 or ep == 1:
                 avg_r = (sum(self.recent_rewards) / len(self.recent_rewards)
                          if self.recent_rewards else 0.0)
-                caught_str = "✓" if caught else "✗"
+                win_rate = (sum(self.recent_wins) / len(self.recent_wins) * 100
+                            if self.recent_wins else 0.0)
+                caught_str    = "✓" if caught else "✗"
+                pac_won_str   = "✓" if pacman_won else "✗"
                 print(
                     f"[Trainer] Ep {ep:5d}/{episodes}"
                     f" | R={total_reward:8.2f}"
                     f" | AvgR(100)={avg_r:8.2f}"
+                    f" | WinRate(100)={win_rate:5.1f}%"
                     f" | ε={self.agent.epsilon:.4f}"
                     f" | steps={step:4d}"
                     f" | złapał={caught_str}"
+                    f" | pac_won={pac_won_str}"
                     f" | loss={self.agent.avg_loss:.5f}"
                 )
 
@@ -287,17 +304,20 @@ class Trainer:
             current_ep  = self.current_ep
             best_r      = self.best_reward
             recent_r    = list(self.recent_rewards)
+            recent_w    = list(self.recent_wins)
 
         progress = (current_ep / total_ep * 100) if total_ep > 0 else 0.0
         avg_r    = (sum(recent_r) / len(recent_r)) if recent_r else 0.0
+        win_rate = (sum(recent_w) / len(recent_w) * 100) if recent_w else 0.0
 
         return {
-            "is_training":    self.is_training,
+            "is_training":     self.is_training,
             "current_episode": current_ep,
             "total_episodes":  total_ep,
             "progress_pct":    round(progress, 1),
             "best_reward":     round(best_r, 2) if best_r != float("-inf") else None,
             "avg_reward_100":  round(avg_r, 2),
+            "win_rate_100":    round(win_rate, 1),
             "recent_logs":     recent_logs,
             "agent_info":      self.agent.get_info(),
         }
@@ -336,18 +356,19 @@ class Trainer:
         for e in logs:
             sid = e.get("session", 1)
             if sid not in sessions:
-                sessions[sid] = {"episodes": [], "rewards": [], "epsilons": []}
+                sessions[sid] = {"episodes": [], "rewards": [], "epsilons": [], "wins": []}
             global_ep += 1
             sessions[sid]["episodes"].append(global_ep)
             sessions[sid]["rewards"].append(e["reward"])
             sessions[sid]["epsilons"].append(e["epsilon"])
+            sessions[sid]["wins"].append(1 if e.get("caught") else 0)
 
         palette = ["steelblue", "tomato", "mediumseagreen", "mediumpurple",
                    "darkorange", "deeppink", "teal", "goldenrod"]
 
         window = 20
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 12))
         fig.suptitle("DQN Ghost Training Progress", fontsize=14, fontweight="bold")
 
         for idx, (sid, data) in enumerate(sorted(sessions.items())):
@@ -355,37 +376,56 @@ class Trainer:
             eps   = data["episodes"]
             rews  = data["rewards"]
             epsls = data["epsilons"]
+            wins  = data["wins"]
 
-            # Ruchome średnie w obrębie sesji
+            # Ruchome średnie nagrody
             smoothed = []
             for i in range(len(rews)):
                 start = max(0, i - window + 1)
                 smoothed.append(sum(rews[start:i+1]) / (i - start + 1))
+
+            # Ruchomy win rate (w procentach)
+            win_rate_curve = []
+            for i in range(len(wins)):
+                start = max(0, i - window + 1)
+                chunk = wins[start:i+1]
+                win_rate_curve.append(sum(chunk) / len(chunk) * 100)
 
             label = f"Sesja {sid}"
             ax1.plot(eps, rews, alpha=0.25, color=color)
             ax1.plot(eps, smoothed, color=color, linewidth=2,
                      label=f"{label} – śr. krocząca ({window} ep)")
 
-            ax2.plot(eps, epsls, color=color, linewidth=2, label=label)
+            ax2.plot(eps, win_rate_curve, color=color, linewidth=2, label=label)
+
+            ax3.plot(eps, epsls, color=color, linewidth=2, label=label)
 
             # Pionowa linia oddzielająca sesje
             if eps:
                 ax1.axvline(x=eps[0], color=color, linestyle=":", alpha=0.5)
                 ax2.axvline(x=eps[0], color=color, linestyle=":", alpha=0.5)
+                ax3.axvline(x=eps[0], color=color, linestyle=":", alpha=0.5)
 
         ax1.set_xlabel("Epizod (globalny)")
         ax1.set_ylabel("Łączna nagroda")
+        ax1.set_title("Średnia nagroda skumulowana")
         ax1.legend(fontsize=8)
         ax1.grid(True, alpha=0.3)
         ax1.axhline(y=0, color="gray", linestyle="--", alpha=0.5)
 
         ax2.set_xlabel("Epizod (globalny)")
-        ax2.set_ylabel("Epsilon (ε)")
-        ax2.set_ylim([0, 1.05])
+        ax2.set_ylabel("Win rate (%)")
+        ax2.set_ylim([0, 105])
+        ax2.set_title(f"Win rate ducha – śr. krocząca ({window} ep)")
         ax2.grid(True, alpha=0.3)
         ax2.legend(fontsize=8)
-        ax2.set_title("Zanik eksploracji (ε-decay)")
+
+        ax3.set_xlabel("Epizod (globalny)")
+        ax3.set_ylabel("Epsilon (ε)")
+        ax3.set_ylim([0, 1.05])
+        ax3.grid(True, alpha=0.3)
+        ax3.legend(fontsize=8)
+        ax3.set_title("Zanik eksploracji (ε-decay)")
 
         plt.tight_layout()
         os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
