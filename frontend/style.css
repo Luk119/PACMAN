@@ -87,7 +87,7 @@ header::after {
 }
 
 .subtitle {
-  font-size: 0.48rem;
+  font-size: 0.55rem;
   color: var(--text-mid);
   letter-spacing: 3px;
   text-transform: uppercase;
@@ -97,22 +97,23 @@ header::after {
 .header-credit {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .credit-label {
-  font-size: 0.45rem;
-  color: var(--text-dim);
+  font-size: 0.55rem;
+  color: var(--text-mid);
   text-transform: uppercase;
   letter-spacing: 2px;
 }
 
 .credit-value {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   color: var(--yellow);
   letter-spacing: 2px;
+  text-shadow: 0 0 10px var(--yellow);
 }
 
 /* --------------------------------------------------------------------------
@@ -234,7 +235,7 @@ header::after {
 }
 
 .hud-label {
-  font-size: 0.42rem;
+  font-size: 0.5rem;
   color: var(--text-mid);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -292,7 +293,7 @@ header::after {
   background: var(--bg-card);
   border-bottom: 2px solid var(--border);
   border-radius: 0;
-  font-size: 0.52rem;
+  font-size: 0.6rem;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -333,7 +334,7 @@ header::after {
   border-radius: 0;
   color: var(--text-mid);
   font-family: inherit;
-  font-size: 0.5rem;
+  font-size: 0.58rem;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -364,7 +365,7 @@ header::after {
   background: var(--bg-card);
   color: var(--text-hi);
   font-family: inherit;
-  font-size: 0.5rem;
+  font-size: 0.58rem;
   cursor: pointer;
   transition: all 0.1s;
   text-transform: uppercase;
@@ -533,8 +534,8 @@ header::after {
 }
 
 .stat-label {
-  font-size: 0.44rem;
-  color: var(--text-dim);
+  font-size: 0.52rem;
+  color: var(--text-mid);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   margin-bottom: 6px;
@@ -661,6 +662,11 @@ header::after {
   box-shadow: 2px 2px 0 rgba(0,200,216,0.15);
 }
 
+.kbd-arrow {
+  font-family: Arial, 'Segoe UI', sans-serif;
+  font-size: 1rem;
+}
+
 .kbd.active {
   background: rgba(255,45,155,0.18);
   border-color: var(--pink);
@@ -689,7 +695,7 @@ header::after {
   border-radius: 0;
   color: var(--text-mid);
   font-family: inherit;
-  font-size: 0.5rem;
+  font-size: 0.58rem;
   cursor: pointer;
   transition: all 0.1s;
   text-align: center;
@@ -1190,7 +1196,7 @@ footer {
 .toggle-slider::before { border-radius: 0; width: 12px; height: 12px; }
 
 /* Badge — kanciaste */
-.badge { border-radius: 0; font-size: 0.44rem; letter-spacing: 1.5px; }
+.badge { border-radius: 0; font-size: 0.52rem; letter-spacing: 1.5px; }
 
 /* Log entry — wyraźniejsze */
 .log-entry {
@@ -1199,7 +1205,7 @@ footer {
 }
 
 /* Input label — mniejszy font */
-.input-row label { font-size: 0.5rem; }
-.toggle-label    { font-size: 0.5rem; }
-.progress-meta   { font-size: 0.45rem; }
-.progress-label  { font-size: 0.45rem; }
+.input-row label { font-size: 0.55rem; }
+.toggle-label    { font-size: 0.55rem; }
+.progress-meta   { font-size: 0.52rem; }
+.progress-label  { font-size: 0.52rem; }

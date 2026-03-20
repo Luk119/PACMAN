@@ -17,8 +17,8 @@
   <div class="logo">PAC-MAN&nbsp;&nbsp;DQN</div>
   <div class="subtitle">Deep Q-Learning &nbsp;·&nbsp; Praca inżynierska</div>
   <div class="header-credit">
-    <span class="credit-label">CREDIT</span>
-    <span class="credit-value blink">00</span>
+    <span class="credit-label">HIGHSCORE</span>
+    <span class="credit-value blink" id="headerHighscore">––––</span>
   </div>
   <div class="theme-toggle-wrap" title="Przełącz motyw">
     <span class="theme-icon">🌙</span>
@@ -138,12 +138,12 @@
             <div style="font-size:0.65rem;color:var(--text-dim);">lub</div>
             <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
               <div style="display:flex;gap:4px;">
-                <div class="kbd" id="keyUP">↑</div>
+                <div class="kbd kbd-arrow" id="keyUP">▲</div>
               </div>
               <div style="display:flex;gap:4px;">
-                <div class="kbd" id="keyLEFT">←</div>
-                <div class="kbd" id="keyDOWN">↓</div>
-                <div class="kbd" id="keyRIGHT">→</div>
+                <div class="kbd kbd-arrow" id="keyLEFT">◀</div>
+                <div class="kbd kbd-arrow" id="keyDOWN">▼</div>
+                <div class="kbd kbd-arrow" id="keyRIGHT">▶</div>
               </div>
             </div>
           </div>

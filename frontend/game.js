@@ -1026,11 +1026,26 @@ async function submitScore(score, level, timeSec) {
   }
 }
 
+async function updateHeaderHighscore() {
+  try {
+    let best = 0;
+    for (const lvl of [1, 2, 3]) {
+      const data = await apiGet(`/scores?level=${lvl}`);
+      if (data.scores && data.scores.length > 0) {
+        best = Math.max(best, data.scores[0].score ?? 0);
+      }
+    }
+    const el = document.getElementById("headerHighscore");
+    if (el) el.textContent = best > 0 ? best : "––––";
+  } catch (e) {}
+}
+
 async function fetchLeaderboard(level) {
   try {
     const data = await apiGet(`/scores?level=${level}`);
     renderLeaderboard(level, data.scores);
     updateGuestPlaceholder(data.guest_counter ?? 0);
+    updateHeaderHighscore();
   } catch (e) {
     console.warn("Błąd pobierania tablicy:", e.message);
   }
@@ -1061,12 +1076,16 @@ function renderLeaderboard(level, scores) {
     const isMe    = myNick && entry.nick === myNick;
     const rankCls = medalClass[i] ?? "lb-normal";
     const cls     = isMe ? `${rankCls} lb-highlight` : rankCls;
+    const rawDate = entry.date ?? "";
+    const dateShort = rawDate.length >= 10
+      ? rawDate.slice(8,10) + "." + rawDate.slice(5,7) + (rawDate.length >= 16 ? " " + rawDate.slice(11,16) : "")
+      : rawDate;
     return `<tr class="${cls}">
       <td>${i === 0 ? '<span style="position:relative;left:-3px;">🏆</span>' : i + 1}</td>
       <td>${escHtml(entry.nick)}</td>
       <td>${entry.score}</td>
       <td>${timeStr}</td>
-      <td style="color:var(--text-mid);font-size:0.68rem;">${entry.date ?? ""}</td>
+      <td style="color:var(--text-mid);">${dateShort}</td>
     </tr>`;
   }).join("");
 }
