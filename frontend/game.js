@@ -657,7 +657,7 @@ function setMode(mode) {
     startTrainPolling();
     // Jeśli watch był włączony, uruchom polling podglądu
     if (App.liveWatchEnabled) startLivePolling();
-    setStatus("Tryb treningu — uruchom trening lub włącz podgląd na żywo.");
+    setStatus("");
   }
 }
 
@@ -755,7 +755,7 @@ function onToggleLiveWatch(checkbox) {
   App.liveWatchEnabled = checkbox.checked;
   if (App.liveWatchEnabled && App.mode === "train") {
     startLivePolling();
-    setStatus("👁 Podgląd na żywo włączony — canvas pokazuje środowisko treningowe.");
+    setStatus("");
   } else {
     stopLivePolling();
     updateLiveOverlay(false);

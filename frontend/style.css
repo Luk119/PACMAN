@@ -41,7 +41,7 @@ html, body {
 body {
   background-color: var(--bg-void);
   color: var(--text-hi);
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
   /* siatka + gradient atmosferyczny — tylko tło, nie wpływa na layout */
   background-image:
     linear-gradient(rgba(0,245,255,0.035) 1px, transparent 1px),
@@ -73,23 +73,46 @@ header::after {
 }
 
 .logo {
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   font-weight: 900;
   letter-spacing: 8px;
   background: linear-gradient(100deg, var(--pink) 0%, var(--cyan) 55%, var(--yellow) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 10px rgba(255,45,155,0.55));
+  filter: drop-shadow(0 0 14px rgba(255,45,155,0.7));
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
+  animation: logo-flicker 6s steps(1) infinite;
 }
 
 .subtitle {
-  font-size: 0.7rem;
+  font-size: 0.48rem;
   color: var(--text-mid);
   letter-spacing: 3px;
   text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.header-credit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.credit-label {
+  font-size: 0.45rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.credit-value {
+  font-size: 0.55rem;
+  color: var(--yellow);
+  letter-spacing: 2px;
 }
 
 /* --------------------------------------------------------------------------
@@ -138,11 +161,11 @@ header::after {
 .canvas-frame::before {
   content: '';
   position: absolute;
-  inset: -3px;
-  border-radius: 7px;
+  inset: -4px;
+  border-radius: 0;
   background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
   z-index: 0;
-  opacity: 0.8;
+  opacity: 0.9;
   animation: frame-glow 3s ease-in-out infinite;
 }
 
@@ -150,7 +173,7 @@ header::after {
   content: '';
   position: absolute;
   inset: -2px;
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--bg-void);
   z-index: 1;
 }
@@ -164,7 +187,7 @@ header::after {
   display: block;
   position: relative;
   z-index: 2;
-  border-radius: 4px;
+  border-radius: 0;
   width: 570px;
   height: 570px;
   image-rendering: pixelated;
@@ -176,12 +199,13 @@ header::after {
   inset: 0;
   z-index: 3;
   pointer-events: none;
-  border-radius: 4px;
+  border-radius: 0;
   background: repeating-linear-gradient(
     to bottom,
-    transparent 0px, transparent 3px,
-    rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px
+    transparent 0px, transparent 2px,
+    rgba(0,0,0,0.22) 2px, rgba(0,0,0,0.22) 4px
   );
+  animation: crt-flicker 8s steps(1) infinite;
 }
 
 /* --------------------------------------------------------------------------
@@ -194,11 +218,12 @@ header::after {
   align-items: center;
   padding: 8px 14px;
   background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-top: 1px solid var(--cyan);
-  border-radius: 5px;
+  border: 2px solid var(--border);
+  border-top: 2px solid var(--cyan);
+  border-radius: 0;
   gap: 4px;
   flex-wrap: wrap;
+  box-shadow: 0 0 12px rgba(0,200,216,0.15), 4px 4px 0 rgba(0,200,216,0.1);
 }
 
 .hud-item {
@@ -209,18 +234,20 @@ header::after {
 }
 
 .hud-label {
-  font-size: 0.58rem;
+  font-size: 0.42rem;
   color: var(--text-mid);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
+  margin-bottom: 2px;
 }
 
 .hud-value {
-  font-size: 0.92rem;
+  font-size: 0.75rem;
   font-weight: bold;
   color: var(--cyan);
   white-space: nowrap;
+  text-shadow: 0 0 8px currentColor;
 }
 .hud-value.yellow { color: var(--yellow); }
 .hud-value.green  { color: var(--green);  }
@@ -251,9 +278,10 @@ header::after {
    -------------------------------------------------------------------------- */
 .panel {
   background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: visible;           /* NIE ukrywaj zawartości */
+  border: 2px solid var(--border);
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: 4px 4px 0 rgba(0,200,216,0.15);
 }
 
 .panel-header {
@@ -262,9 +290,9 @@ header::after {
   gap: 8px;
   padding: 9px 14px;
   background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
-  border-radius: 8px 8px 0 0;
-  font-size: 0.72rem;
+  border-bottom: 2px solid var(--border);
+  border-radius: 0;
+  font-size: 0.52rem;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -276,7 +304,7 @@ header::after {
   content: '';
   position: absolute;
   left: 0; top: 0; bottom: 0; width: 3px;
-  border-radius: 8px 0 0 0;
+  border-radius: 0;
   background: linear-gradient(to bottom, var(--pink), var(--cyan));
 }
 
@@ -299,71 +327,78 @@ header::after {
 }
 
 .mode-btn {
-  padding: 9px;
+  padding: 10px 9px;
   background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: 5px;
+  border: 2px solid var(--border);
+  border-radius: 0;
   color: var(--text-mid);
   font-family: inherit;
-  font-size: 0.72rem;
+  font-size: 0.5rem;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.1s;
+  box-shadow: 3px 3px 0 rgba(0,200,216,0.15);
 }
 .mode-btn:hover {
   border-color: var(--cyan);
   color: var(--cyan);
   background: rgba(0,245,255,0.05);
+  box-shadow: 0 0 12px var(--cyan), 3px 3px 0 rgba(0,200,216,0.3);
 }
 .mode-btn.active {
   background: linear-gradient(135deg, rgba(255,45,155,0.18), rgba(0,245,255,0.12));
   border-color: var(--cyan);
   color: var(--cyan);
-  box-shadow: 0 0 10px rgba(0,245,255,0.25);
+  box-shadow: 0 0 14px rgba(0,245,255,0.4), 3px 3px 0 rgba(0,200,216,0.3);
 }
 
 /* --------------------------------------------------------------------------
    PRZYCISKI
    -------------------------------------------------------------------------- */
 .btn {
-  padding: 7px 10px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  padding: 8px 10px;
+  border: 2px solid var(--border);
+  border-radius: 0;
   background: var(--bg-card);
   color: var(--text-hi);
   font-family: inherit;
-  font-size: 0.72rem;
+  font-size: 0.5rem;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.1s;
   text-transform: uppercase;
   letter-spacing: 1px;
   white-space: nowrap;
+  box-shadow: 3px 3px 0 rgba(0,200,216,0.2);
 }
-.btn:hover    { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.06); }
+.btn:hover    { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.06); box-shadow: 0 0 12px var(--cyan), 3px 3px 0 rgba(0,200,216,0.3); }
+.btn:active   { box-shadow: 1px 1px 0 rgba(0,200,216,0.2); transform: translate(2px,2px); }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .btn-primary {
   background: rgba(255,45,155,0.14);
   border-color: var(--pink);
   color: var(--pink);
+  box-shadow: 3px 3px 0 rgba(232,32,138,0.25);
 }
-.btn-primary:hover { background: rgba(255,45,155,0.26); box-shadow: 0 0 10px rgba(255,45,155,0.35); }
+.btn-primary:hover { background: rgba(255,45,155,0.26); box-shadow: 0 0 14px var(--pink), 3px 3px 0 rgba(232,32,138,0.35); }
 
 .btn-danger {
   background: rgba(255,34,68,0.14);
   border-color: var(--red);
   color: var(--red);
+  box-shadow: 3px 3px 0 rgba(240,32,64,0.25);
 }
-.btn-danger:hover { background: rgba(255,34,68,0.26); }
+.btn-danger:hover { background: rgba(255,34,68,0.26); box-shadow: 0 0 14px var(--red), 3px 3px 0 rgba(240,32,64,0.35); }
 
 .btn-success {
   background: rgba(0,255,136,0.1);
   border-color: var(--green);
   color: var(--green);
+  box-shadow: 3px 3px 0 rgba(0,221,116,0.25);
 }
-.btn-success:hover { background: rgba(0,255,136,0.22); box-shadow: 0 0 10px rgba(0,255,136,0.3); }
+.btn-success:hover { background: rgba(0,255,136,0.22); box-shadow: 0 0 14px var(--green), 3px 3px 0 rgba(0,221,116,0.35); }
 
 .btn-row {
   display: flex;
@@ -432,17 +467,17 @@ header::after {
 .input-row select {
   flex: 1;
   background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border: 2px solid var(--border);
+  border-radius: 0;
   color: var(--text-hi);
   font-family: inherit;
-  font-size: 0.74rem;
+  font-size: 0.55rem;
   padding: 6px 8px;
   transition: border-color 0.15s;
   min-width: 0;
 }
 .input-row input:focus,
-.input-row select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,245,255,0.1); }
+.input-row select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 8px rgba(0,245,255,0.3); }
 .input-row select option { background: var(--bg-card); }
 
 /* --------------------------------------------------------------------------
@@ -458,10 +493,10 @@ header::after {
 }
 
 .progress-track {
-  height: 8px;
+  height: 10px;
   background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border: 2px solid var(--border);
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -469,9 +504,9 @@ header::after {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, var(--pink), var(--cyan));
-  border-radius: 4px;
+  border-radius: 0;
   transition: width 0.6s ease;
-  box-shadow: 0 0 8px rgba(0,245,255,0.45);
+  box-shadow: 0 0 10px var(--cyan);
 }
 
 .progress-label {
@@ -491,17 +526,18 @@ header::after {
 
 .stat-card {
   background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: 5px;
+  border: 2px solid var(--border);
+  border-radius: 0;
   padding: 8px 10px;
+  box-shadow: 2px 2px 0 rgba(0,200,216,0.1);
 }
 
 .stat-label {
-  font-size: 0.58rem;
+  font-size: 0.44rem;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   white-space: nowrap;
 }
 
@@ -614,14 +650,15 @@ header::after {
   justify-content: center;
   width: 34px; height: 34px;
   background: var(--bg-inset);
-  border: 1px solid rgba(0,245,255,0.2);
-  border-bottom: 2px solid rgba(0,245,255,0.35);
-  border-radius: 5px;
-  font-size: 0.72rem;
+  border: 2px solid rgba(0,245,255,0.3);
+  border-bottom: 4px solid rgba(0,245,255,0.5);
+  border-radius: 0;
+  font-size: 0.6rem;
   color: var(--text-mid);
   font-weight: bold;
   user-select: none;
-  transition: all 0.12s;
+  transition: all 0.1s;
+  box-shadow: 2px 2px 0 rgba(0,200,216,0.15);
 }
 
 .kbd.active {
@@ -629,8 +666,8 @@ header::after {
   border-color: var(--pink);
   border-bottom-color: var(--pink);
   color: var(--pink);
-  box-shadow: 0 0 10px rgba(255,45,155,0.4);
-  transform: translateY(1px);
+  box-shadow: 0 0 12px rgba(255,45,155,0.5), 2px 2px 0 rgba(232,32,138,0.3);
+  transform: translateY(2px);
 }
 
 .kbd-hint-text {
@@ -646,23 +683,24 @@ header::after {
 
 .level-btn {
   flex: 1;
-  padding: 6px 4px;
+  padding: 7px 4px;
   background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border: 2px solid var(--border);
+  border-radius: 0;
   color: var(--text-mid);
   font-family: inherit;
-  font-size: 0.7rem;
+  font-size: 0.5rem;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.1s;
   text-align: center;
+  box-shadow: 2px 2px 0 rgba(240,212,0,0.15);
 }
-.level-btn:hover  { border-color: var(--yellow); color: var(--yellow); }
+.level-btn:hover  { border-color: var(--yellow); color: var(--yellow); box-shadow: 0 0 10px var(--yellow), 2px 2px 0 rgba(240,212,0,0.3); }
 .level-btn.active {
   border-color: var(--yellow);
   color: var(--yellow);
   background: rgba(255,230,0,0.08);
-  box-shadow: 0 0 6px rgba(255,230,0,0.2);
+  box-shadow: 0 0 10px rgba(255,230,0,0.35), 2px 2px 0 rgba(240,212,0,0.3);
 }
 
 /* --------------------------------------------------------------------------
@@ -1075,3 +1113,93 @@ footer {
     rgba(0, 0, 0, 0.018) 3px, rgba(0, 0, 0, 0.018) 4px
   );
 }
+
+/* --------------------------------------------------------------------------
+   RETRO — DODATKOWE ANIMACJE I EFEKTY
+   -------------------------------------------------------------------------- */
+
+/* Miganie logo (CRT flicker) */
+@keyframes logo-flicker {
+  0%,  96%, 100% { opacity: 1;    filter: drop-shadow(0 0 14px rgba(255,45,155,0.7)); }
+  97%            { opacity: 0.82; filter: drop-shadow(0 0 6px  rgba(255,45,155,0.3)); }
+  98%            { opacity: 1;    filter: drop-shadow(0 0 20px rgba(255,45,155,0.9)); }
+  99%            { opacity: 0.88; filter: drop-shadow(0 0 8px  rgba(255,45,155,0.4)); }
+}
+
+/* Miganie scanlines (subtelny CRT) */
+@keyframes crt-flicker {
+  0%,  94%, 100% { opacity: 1; }
+  95%            { opacity: 0.88; }
+  96%            { opacity: 1; }
+  97%            { opacity: 0.92; }
+}
+
+/* Klasyczne arcade blink */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.blink { animation: blink 1s steps(1) infinite; }
+
+/* Pulsowanie neonowe dla wartości live */
+@keyframes neon-pulse {
+  0%, 100% { text-shadow: 0 0 6px currentColor; }
+  50%       { text-shadow: 0 0 18px currentColor, 0 0 30px currentColor; }
+}
+
+.hud-value { animation: neon-pulse 2.5s ease-in-out infinite; }
+
+/* Badge training — mocniejszy puls */
+.badge-training {
+  animation: pulse-green 1.4s ease-in-out infinite, blink-border 1.4s steps(1) infinite;
+}
+@keyframes blink-border {
+  0%, 49% { border-color: rgba(0,255,136,0.4); }
+  50%, 100% { border-color: rgba(0,255,136,0.9); }
+}
+
+/* Status bar — kursor migający */
+.status-bar::after {
+  content: '█';
+  color: var(--cyan);
+  animation: blink 1s steps(1) infinite;
+  margin-left: 3px;
+  font-size: 0.7rem;
+}
+
+/* Log box — pixel font dla wpisów */
+.log-box {
+  font-size: 0.55rem;
+  line-height: 2;
+}
+
+/* Footer retro */
+footer {
+  font-size: 0.44rem;
+  letter-spacing: 1.5px;
+}
+
+/* Scroll bar retro */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-inset); border: 1px solid var(--border); }
+::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 0; box-shadow: 0 0 6px var(--cyan); }
+
+/* Zaokrąglenia toggle — zostawiamy, ale border 2px */
+.toggle-slider { border-radius: 0; border: 2px solid rgba(255,255,255,0.2); }
+.toggle-slider::before { border-radius: 0; width: 12px; height: 12px; }
+
+/* Badge — kanciaste */
+.badge { border-radius: 0; font-size: 0.44rem; letter-spacing: 1.5px; }
+
+/* Log entry — wyraźniejsze */
+.log-entry {
+  border-bottom: 1px solid rgba(0,200,216,0.06);
+  padding: 2px 0;
+}
+
+/* Input label — mniejszy font */
+.input-row label { font-size: 0.5rem; }
+.toggle-label    { font-size: 0.5rem; }
+.progress-meta   { font-size: 0.45rem; }
+.progress-label  { font-size: 0.45rem; }
