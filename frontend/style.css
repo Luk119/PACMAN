@@ -334,7 +334,7 @@ header::after {
   border-radius: 0;
   color: var(--text-mid);
   font-family: inherit;
-  font-size: 0.58rem;
+  font-size: 0.48rem;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -1016,14 +1016,14 @@ footer {
 
 /* Mały toggle (38×20) dla headera */
 .theme-toggle-switch { width: 38px; height: 20px; }
-.theme-toggle-switch .toggle-slider { border-radius: 10px; }
-.theme-toggle-switch .toggle-slider::before { width: 12px; height: 12px; left: 3px; top: 3px; }
+.theme-toggle-switch .toggle-slider { border-radius: 0; }
+.theme-toggle-switch .toggle-slider::before { width: 12px; height: 12px; left: 3px; top: 50%; transform: translateY(-50%); }
 .theme-toggle-switch input:checked + .toggle-slider {
   background: rgba(255,230,0,0.18);
   border-color: var(--yellow);
 }
 .theme-toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(18px);
+  transform: translateX(14px) translateY(-50%);
   background: var(--yellow);
   box-shadow: 0 0 6px var(--yellow);
 }
@@ -1036,14 +1036,14 @@ footer {
 .lb-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.68rem;
+  font-size: 0.58rem;
 }
 
 .lb-table th {
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-size: 0.58rem;
+  font-size: 0.5rem;
   padding: 4px 5px;
   border-bottom: 1px solid var(--border);
   text-align: left;
@@ -1191,9 +1191,37 @@ footer {
 ::-webkit-scrollbar-track { background: var(--bg-inset); border: 1px solid var(--border); }
 ::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 0; box-shadow: 0 0 6px var(--cyan); }
 
-/* Zaokrąglenia toggle — zostawiamy, ale border 2px */
-.toggle-slider { border-radius: 0; border: 2px solid rgba(255,255,255,0.2); }
-.toggle-slider::before { border-radius: 0; width: 12px; height: 12px; }
+/* Toggle retro — prostokątny, wyrównany */
+.toggle-slider {
+  border-radius: 0;
+  border: 2px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
+}
+.toggle-slider::before {
+  border-radius: 0;
+  width: 12px;
+  height: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 3px;
+}
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px) translateY(-50%);
+}
+
+/* Theme toggle — musi być po retro override żeby wygrać kaskadą */
+.theme-toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(17px) translateY(-50%);
+}
+
+/* Tryb jasny — widoczny suwak gdy wyłączony */
+[data-theme="light"] .toggle-slider {
+  background: rgba(0,0,0,0.08);
+  border-color: rgba(0,0,80,0.35);
+}
+[data-theme="light"] .toggle-slider::before {
+  background: rgba(0,0,80,0.4);
+}
 
 /* Badge — kanciaste */
 .badge { border-radius: 0; font-size: 0.52rem; letter-spacing: 1.5px; }
@@ -1206,6 +1234,6 @@ footer {
 
 /* Input label — mniejszy font */
 .input-row label { font-size: 0.55rem; }
-.toggle-label    { font-size: 0.55rem; }
+.toggle-label    { font-size: 0.65rem; }
 .progress-meta   { font-size: 0.52rem; }
 .progress-label  { font-size: 0.52rem; }

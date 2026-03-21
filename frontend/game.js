@@ -70,6 +70,7 @@ const App = {
   lbLevel:          1,            // aktywna zakładka tablicy wyników
   gameReady:        false,        // true dopiero po zakończeniu resetu — blokuje fałszywy handleGameOver
   gameStarted:      false,        // true gdy gracz nacisnął P — od tego momentu liczy się czas
+  countdown:        null,         // null lub liczba 3/2/1/0 podczas odliczania
 };
 
 // ---------------------------------------------------------------------------
@@ -117,6 +118,7 @@ async function initGame(level = 1) {
     const data = await apiPost("/reset", { level });
     App.gameStartTime = null;
     App.gameStarted   = false;
+    App.countdown     = null;
     App.gameReady     = true;
     updateGameState(data);
     updateHUD(data);
@@ -233,7 +235,7 @@ function canvasPalette() {
 /** Rysuje pasek power-up na górze canvasu (kurczy się w miarę upływu czasu) */
 function drawPowerBar(timer) {
   const MAX_TIMER = 50;
-  const BAR_H     = 8;
+  const BAR_H     = 14;
   const BAR_Y     = 0;
   const ratio     = Math.max(0, timer / MAX_TIMER);
   const barW      = Math.round(CANVAS_W * ratio);
@@ -269,7 +271,9 @@ function render() {
   drawGhost(gs.ghost, gs.power_mode);
   if (gs.power_mode) drawPowerBar(gs.power_timer);
 
-  if (gs.done) {
+  if (App.countdown !== null) {
+    drawCountdownOverlay();
+  } else if (gs.done) {
     drawGameOverOverlay(gs.game_won ? "PAC-MAN WYGRYWA!" : "GAME OVER",
                         gs.game_won, p);
   }
@@ -479,10 +483,36 @@ function startGame() {
   if (!App.gameReady || App.gameStarted) return;
   if (App.mode !== "play") return;
   const gs = App.gameState;
-  if (gs && gs.done) return;   // gra już zakończona — czekaj na reset
-  App.gameStarted   = true;
-  App.gameStartTime = Date.now();
-  render();   // usuń nakładkę
+  if (gs && gs.done) return;
+  if (App.countdown !== null) return;
+  App.countdown = 3;
+  render();
+  const tick = setInterval(() => {
+    App.countdown--;
+    if (App.countdown <= 0) {
+      clearInterval(tick);
+      App.countdown     = null;
+      App.gameStarted   = true;
+      App.gameStartTime = Date.now();
+    }
+    render();
+  }, 1000);
+}
+
+function drawCountdownOverlay() {
+  const p = canvasPalette();
+  ctx.fillStyle = p.overlay;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.textAlign    = "center";
+  ctx.textBaseline = "middle";
+  const label = App.countdown > 0 ? String(App.countdown) : "START";
+  const size  = App.countdown > 0 ? 120 : 72;
+  ctx.font        = `bold ${size}px 'Courier New', monospace`;
+  ctx.fillStyle   = App.countdown > 0 ? "#f0d400" : "#00dd74";
+  ctx.shadowColor = App.countdown > 0 ? "#f0d400" : "#00dd74";
+  ctx.shadowBlur  = 30;
+  ctx.fillText(label, CANVAS_W / 2, CANVAS_H / 2);
+  ctx.shadowBlur  = 0;
 }
 
 /** Nakładka GAME OVER / WIN na canvasie */
@@ -505,10 +535,10 @@ function drawGameOverOverlay(message, isWin, p) {
   const elapsed = App.gameStartTime ? (Date.now() - App.gameStartTime) / 1000 : 0;
   const timeStr = formatTime(elapsed);
   ctx.font      = "bold 16px 'Courier New', monospace";
-  ctx.fillStyle = p.light ? "#1a2252" : "#ffbb33";
+  ctx.fillStyle = p.light ? "#1a2252" : "#f0d400";
   ctx.fillText(`Wynik: ${score}   Czas: ${timeStr}`, CANVAS_W / 2, CANVAS_H / 2 + 18);
 
-  ctx.font      = "13px 'Courier New', monospace";
+  ctx.font      = "16px 'Courier New', monospace";
   ctx.fillStyle = p.light ? "#445" : "#aaaacc";
   ctx.fillText("Naciśnij [R] lub kliknij Reset", CANVAS_W / 2, CANVAS_H / 2 + 44);
 }
@@ -875,9 +905,9 @@ async function onStartTraining() {
   if (logEl) logEl.innerHTML = "";
 
   try {
-    setStatus("⏳ Uruchamianie treningu...");
+    setStatus("");
     const data = await apiPost("/train", { episodes, level });
-    setStatus(`▶ ${data.message}`);
+    setStatus("");
     startTrainPolling();
   } catch (e) {
     setStatus("❌ Błąd uruchamiania treningu: " + e.message);
@@ -1078,7 +1108,7 @@ function renderLeaderboard(level, scores) {
     const cls     = isMe ? `${rankCls} lb-highlight` : rankCls;
     const rawDate = entry.date ?? "";
     const dateShort = rawDate.length >= 10
-      ? rawDate.slice(8,10) + "." + rawDate.slice(5,7) + (rawDate.length >= 16 ? " " + rawDate.slice(11,16) : "")
+      ? rawDate.slice(8,10) + "." + rawDate.slice(5,7) + "." + rawDate.slice(2,4) + (rawDate.length >= 16 ? " " + rawDate.slice(11,16) : "")
       : rawDate;
     return `<tr class="${cls}">
       <td>${i === 0 ? '<span style="position:relative;left:-3px;">🏆</span>' : i + 1}</td>
