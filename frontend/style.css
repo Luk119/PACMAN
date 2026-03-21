@@ -479,6 +479,11 @@ header::after {
 }
 .input-row input:focus,
 .input-row select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 8px rgba(0,245,255,0.3); }
+
+/* Ukryj strzałki w input[type=number] */
+.input-row input[type=number]::-webkit-inner-spin-button,
+.input-row input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.input-row input[type=number] { -moz-appearance: textfield; }
 .input-row select option { background: var(--bg-card); }
 
 /* --------------------------------------------------------------------------

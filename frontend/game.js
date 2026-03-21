@@ -71,6 +71,7 @@ const App = {
   gameReady:        false,        // true dopiero po zakończeniu resetu — blokuje fałszywy handleGameOver
   gameStarted:      false,        // true gdy gracz nacisnął P — od tego momentu liczy się czas
   countdown:        null,         // null lub liczba 3/2/1/0 podczas odliczania
+  countdownTotalStart: null,      // czas startu całego odliczania (do animacji tła)
   flashAlpha:       0,            // czerwony flash gdy duszek złapie Pac-Mana
   waitingForStart:  false,        // true gdy czekamy na naciśnięcie P (INSERT COIN)
   prevScore:        0,            // poprzedni wynik (do wykrywania zjedzenia kropki)
@@ -569,7 +570,7 @@ function drawWaitForStartOverlay() {
   ctx.textBaseline = "middle";
 
   // INSERT COIN — blink every 600ms
-  const blink = Math.floor(Date.now() / 600) % 2 === 0;
+  const blink = (Date.now() % 1200) < 900;
   if (blink) {
     ctx.font      = "bold 32px 'Courier New', monospace";
     ctx.fillStyle = p.light ? "#e06500" : "#ffee00";
@@ -609,10 +610,11 @@ function startGame() {
   App.waitingForStart = false;
   App.countdown = 3;
   App.countdownStartTime = Date.now();
+  App.countdownTotalStart = Date.now();
   render();
   function _runCountdownRender() {
     if (App.countdown === null) return;
-    drawCountdownOverlay();
+    render();
     requestAnimationFrame(_runCountdownRender);
   }
   _runCountdownRender();
@@ -631,30 +633,35 @@ function startGame() {
 }
 
 function drawCountdownOverlay() {
-  const p = canvasPalette();
-  ctx.fillStyle = p.overlay;
+  // Plansza już narysowana przez render() — tu tylko nakładka i cyfra
+
+  // 1. Ciemna nakładka zanikająca w ciągu 3.5 s
+  const totalElapsed = App.countdownTotalStart
+    ? (Date.now() - App.countdownTotalStart) / 3500
+    : 0;
+  const overlayAlpha = Math.max(0, 0.85 * (1 - Math.min(totalElapsed, 1)));
+  ctx.fillStyle = `rgba(4,4,15,${overlayAlpha})`;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-  const elapsed = App.countdownStartTime ? (Date.now() - App.countdownStartTime) / 1000 : 0;
-  // scale: starts big (1.6), shrinks to 1.0
-  const scale = 1.6 - 0.6 * Math.min(elapsed, 1.0);
-  const label = App.countdown > 0 ? String(App.countdown) : "START";
+  // 2. Cyfra / START — zoom in (duża → normalna)
+  const elapsed  = App.countdownStartTime ? (Date.now() - App.countdownStartTime) / 1000 : 0;
+  const scale    = 1.6 - 0.6 * Math.min(elapsed, 1.0);
+  const label    = App.countdown > 0 ? String(App.countdown) : "START";
   const baseSize = App.countdown > 0 ? 120 : 72;
-  const size = Math.round(baseSize * scale);
+  const size     = Math.round(baseSize * scale);
+  const alpha    = Math.min(1, elapsed * 5);
 
   ctx.save();
   ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
-  ctx.font        = `bold ${size}px 'Courier New', monospace`;
-  ctx.fillStyle   = App.countdown > 0 ? "#f0d400" : "#00dd74";
-  ctx.shadowColor = App.countdown > 0 ? "#f0d400" : "#00dd74";
-  ctx.shadowBlur  = 30;
-  // fade in: alpha goes from 0.3 to 1.0 quickly
-  const alpha = Math.min(1, elapsed * 5);
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha  = alpha;
+  ctx.font         = `bold ${size}px 'Courier New', monospace`;
+  ctx.fillStyle    = App.countdown > 0 ? "#f0d400" : "#00dd74";
+  ctx.shadowColor  = App.countdown > 0 ? "#f0d400" : "#00dd74";
+  ctx.shadowBlur   = 30;
   ctx.fillText(label, CANVAS_W / 2, CANVAS_H / 2);
   ctx.restore();
-  ctx.shadowBlur  = 0;
+  ctx.shadowBlur = 0;
 }
 
 /** Nakładka GAME OVER / WIN na canvasie */
@@ -826,6 +833,9 @@ function setMode(mode) {
     apiGet("/game_state").then(d => { updateGameState(d); render(); }).catch(() => {});
   } else {
     stopGameLoop();
+    // Zatrzymaj pętle INSERT COIN i odliczania żeby nie nadpisywały canvasu treningu
+    App.waitingForStart = false;
+    App.countdown = null;
     startTrainPolling();
     // Jeśli watch był włączony, uruchom polling podglądu
     if (App.liveWatchEnabled) startLivePolling();
@@ -897,16 +907,6 @@ function renderTrainingState(gs) {
   drawPacman(gs.pacman, App.mouthOpen, 0);
   drawGhost(gs.ghost, gs.power_mode || false);
 
-  // Pasek informacyjny na dole canvasu
-  ctx.save();
-  ctx.fillStyle = p.light ? "rgba(200,210,230,0.88)" : "rgba(0,0,0,0.72)";
-  ctx.fillRect(0, CANVAS_H - 20, CANVAS_W, 20);
-  ctx.font = "11px 'Courier New'";
-  ctx.fillStyle = p.light ? "#006b3c" : "#00ff88";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  ctx.fillText(`▶  EP ${gs.current_episode}    STEP ${gs.step}`, 10, CANVAS_H - 10);
-  ctx.restore();
 }
 
 /** Aktualizuje etykietę statusu podglądu w panelu treningu */
