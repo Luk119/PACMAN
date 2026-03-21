@@ -72,6 +72,9 @@ const App = {
   gameStarted:      false,        // true gdy gracz nacisnął P — od tego momentu liczy się czas
   countdown:        null,         // null lub liczba 3/2/1/0 podczas odliczania
   countdownTotalStart: null,      // czas startu całego odliczania (do animacji tła)
+  _trainLevel:        1,          // wybrany poziom w panelu treningu
+  _trainEpisodes:     1000,       // wybrana liczba epizodów treningu
+  _highscore:         0,          // globalny najlepszy wynik
   flashAlpha:       0,            // czerwony flash gdy duszek złapie Pac-Mana
   waitingForStart:  false,        // true gdy czekamy na naciśnięcie P (INSERT COIN)
   prevScore:        0,            // poprzedni wynik (do wykrywania zjedzenia kropki)
@@ -560,7 +563,7 @@ function drawGhost(pos, powerMode) {
   }
 }
 
-/** Nakładka INSERT COIN (miga co 600ms) */
+/** Nakładka INSERT COIN */
 function drawWaitForStartOverlay() {
   if (!ctx) return;
   const p = canvasPalette();
@@ -569,25 +572,37 @@ function drawWaitForStartOverlay() {
   ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
 
-  // INSERT COIN — blink every 600ms
-  const blink = (Date.now() % 1200) < 900;
+  // HIGHSCORE — góra canvasu
+  const hs = App._highscore > 0 ? String(App._highscore) : "––––";
+  ctx.font      = "13px 'Courier New', monospace";
+  ctx.fillStyle = p.light ? "#7a5c00" : "#555878";
+  ctx.fillText("HIGHSCORE", CANVAS_W / 2, CANVAS_H / 2 - 110);
+  ctx.font        = "bold 28px 'Courier New', monospace";
+  ctx.fillStyle   = p.light ? "#7a5c00" : "#f0d400";
+  ctx.shadowColor = p.light ? "#7a5c00" : "#f0d400";
+  ctx.shadowBlur  = p.light ? 0 : 12;
+  ctx.fillText(hs, CANVAS_W / 2, CANVAS_H / 2 - 78);
+  ctx.shadowBlur = 0;
+
+  // INSERT COIN — blink
+  const blink = (Date.now() % 1000) < 500;
   if (blink) {
-    ctx.font      = "bold 32px 'Courier New', monospace";
-    ctx.fillStyle = p.light ? "#e06500" : "#ffee00";
+    ctx.font        = "bold 32px 'Courier New', monospace";
+    ctx.fillStyle   = p.light ? "#e06500" : "#ffee00";
     ctx.shadowColor = p.light ? "#e06500" : "#ffee00";
     ctx.shadowBlur  = p.light ? 0 : 16;
-    ctx.fillText("INSERT COIN", CANVAS_W / 2, CANVAS_H / 2 - 40);
+    ctx.fillText("INSERT COIN", CANVAS_W / 2, CANVAS_H / 2 - 20);
     ctx.shadowBlur = 0;
   }
 
   ctx.font      = "16px 'Courier New', monospace";
   ctx.fillStyle = p.light ? "#1a2252" : "#aaaacc";
-  ctx.fillText("Naciśnij [P] lub kliknij START", CANVAS_W / 2, CANVAS_H / 2 + 5);
+  ctx.fillText("Naciśnij [P] lub kliknij START", CANVAS_W / 2, CANVAS_H / 2 + 22);
 
   const nick = (document.getElementById("playerNick")?.value ?? "").trim();
-  ctx.font      = "14px 'Courier New', monospace";
-  ctx.fillStyle = nick ? (p.light ? "#006b3c" : "#00dd74") : (p.light ? "#3a468a" : "#555878");
-  ctx.fillText(nick ? `GRACZ: ${nick}` : "Wpisz nick w panelu →", CANVAS_W / 2, CANVAS_H / 2 + 40);
+  ctx.font      = "18px 'Courier New', monospace";
+  ctx.fillStyle = nick ? (p.light ? "#006b3c" : "#00dd74") : (p.light ? "#3a468a" : "#888899");
+  ctx.fillText(nick ? `GRACZ: ${nick}` : "Wpisz nick w panelu →", CANVAS_W / 2, CANVAS_H / 2 + 62);
 }
 
 let _insertCoinRafId = null;
@@ -977,12 +992,9 @@ function updateTrainingPanel(data) {
     if (data.is_training) {
       badge.textContent = "TRAINING";
       badge.className   = "badge badge-training";
-    } else if (data.current_episode > 0) {
-      badge.textContent = "DONE";
-      badge.className   = "badge badge-done";
     } else {
-      badge.textContent = "IDLE";
-      badge.className   = "badge badge-idle";
+      badge.textContent = "";
+      badge.className   = "badge";
     }
   }
 
@@ -1034,8 +1046,8 @@ function appendTrainLogs(logs) {
 // OBSŁUGA PRZYCISKÓW UI
 // ---------------------------------------------------------------------------
 async function onStartTraining() {
-  const episodes = parseInt(document.getElementById("trainEpisodes")?.value ?? "500");
-  const level    = parseInt(document.getElementById("trainLevel")?.value    ?? "1");
+  const episodes = App._trainEpisodes ?? 1000;
+  const level    = App._trainLevel ?? 1;
 
   if (isNaN(episodes) || episodes < 1) {
     setStatus("Podaj prawidłową liczbę epizodów.");
@@ -1098,6 +1110,22 @@ async function onToggleOnlineLearning(checkbox) {
   } catch (e) {
     setStatus("❌ Błąd toggle: " + e.message);
   }
+}
+
+function onTrainEpSelect(ep) {
+  App._trainEpisodes = ep;
+  [1000, 10000, 100000].forEach(v => {
+    const btn = document.getElementById(`trainEpBtn${v}`);
+    if (btn) btn.classList.toggle("active", v === ep);
+  });
+}
+
+function onTrainLevelSelect(level) {
+  App._trainLevel = level;
+  [1, 2, 3].forEach(l => {
+    const btn = document.getElementById(`trainLvlBtn${l}`);
+    if (btn) btn.classList.toggle("active", l === level);
+  });
 }
 
 function onLevelSelect(level) {
@@ -1207,8 +1235,7 @@ async function updateHeaderHighscore() {
         best = Math.max(best, data.scores[0].score ?? 0);
       }
     }
-    const el = document.getElementById("headerHighscore");
-    if (el) el.textContent = best > 0 ? best : "––––";
+    App._highscore = best;
   } catch (e) {}
 }
 

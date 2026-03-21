@@ -102,6 +102,13 @@ header::after {
   margin-top: 8px;
 }
 
+.panel-highscore {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+}
+
 .credit-label {
   font-size: 0.55rem;
   color: var(--text-mid);
@@ -479,6 +486,43 @@ header::after {
 }
 .input-row input:focus,
 .input-row select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 8px rgba(0,245,255,0.3); }
+
+/* Wybór poziomu w panelu treningu — segmentowy styl z różowym akcentem */
+.train-level-group {
+  display: flex;
+  flex: 1;
+  gap: 0;
+}
+
+.train-lvl-btn {
+  flex: 1;
+  padding: 6px 4px;
+  background: var(--bg-inset);
+  border: 1px solid rgba(232,32,138,0.2);
+  border-radius: 0;
+  border-right-width: 0;
+  border-bottom: 3px solid transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: center;
+  letter-spacing: 2px;
+}
+.train-lvl-btn:last-child { border-right-width: 1px; }
+.train-lvl-btn:hover {
+  background: rgba(232,32,138,0.08);
+  color: var(--pink);
+  border-bottom-color: rgba(232,32,138,0.5);
+}
+.train-lvl-btn.active {
+  background: rgba(232,32,138,0.14);
+  color: var(--pink);
+  border-bottom: 3px solid var(--pink);
+  text-shadow: 0 0 8px var(--pink);
+}
 
 /* Ukryj strzałki w input[type=number] */
 .input-row input[type=number]::-webkit-inner-spin-button,

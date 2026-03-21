@@ -15,11 +15,6 @@
 <!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
 <header>
   <div class="logo">PAC-MAN&nbsp;&nbsp;DQN</div>
-  <div class="subtitle">Deep Q-Learning &nbsp;·&nbsp; Praca inżynierska</div>
-  <div class="header-credit">
-    <span class="credit-label">HIGHSCORE</span>
-    <span class="credit-value blink" id="headerHighscore">––––</span>
-  </div>
   <div class="theme-toggle-wrap" title="Przełącz motyw">
     <span class="theme-icon">🌙</span>
     <label class="toggle-switch theme-toggle-switch">
@@ -222,15 +217,19 @@
         <!-- Parametry -->
         <div class="input-row">
           <label>Epizody:</label>
-          <input type="number" id="trainEpisodes" value="500" min="1" max="100000" step="100" />
+          <div class="train-level-group">
+            <button class="train-lvl-btn active" id="trainEpBtn1000"  onclick="onTrainEpSelect(1000)">1K</button>
+            <button class="train-lvl-btn"        id="trainEpBtn10000" onclick="onTrainEpSelect(10000)">10K</button>
+            <button class="train-lvl-btn"        id="trainEpBtn100000" onclick="onTrainEpSelect(100000)">100K</button>
+          </div>
         </div>
         <div class="input-row">
           <label>Poziom:</label>
-          <select id="trainLevel">
-            <option value="1">Poziom 1</option>
-            <option value="2">Poziom 2</option>
-            <option value="3">Poziom 3</option>
-          </select>
+          <div class="train-level-group">
+            <button class="train-lvl-btn active" id="trainLvlBtn1" onclick="onTrainLevelSelect(1)">01</button>
+            <button class="train-lvl-btn"        id="trainLvlBtn2" onclick="onTrainLevelSelect(2)">02</button>
+            <button class="train-lvl-btn"        id="trainLvlBtn3" onclick="onTrainLevelSelect(3)">03</button>
+          </div>
         </div>
 
         <hr class="section-sep" />

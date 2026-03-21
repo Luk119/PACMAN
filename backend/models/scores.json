@@ -1,6 +1,12 @@
 {
   "1": [
     {
+      "nick": "Guest_6",
+      "score": 2460,
+      "time": 53.9,
+      "date": "2026-03-21 01:53"
+    },
+    {
       "nick": "Guest_3",
       "score": 2220,
       "time": 40.7,
@@ -65,5 +71,5 @@
       "date": "2026-03-21 01:31"
     }
   ],
-  "guest_counter": 5
+  "guest_counter": 6
 }
