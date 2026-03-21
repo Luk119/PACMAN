@@ -563,6 +563,28 @@ function drawGhost(pos, powerMode) {
   }
 }
 
+/** Rysuje tekst z efektem rozświetlania literka po literce */
+function drawLitText(text, x, y, font, baseColor, litColor, speed = 110) {
+  ctx.save();
+  ctx.font         = font;
+  ctx.textBaseline = "middle";
+  ctx.textAlign    = "left";
+  const totalW   = ctx.measureText(text).width;
+  let   curX     = x - totalW / 2;
+  const litIndex = Math.floor(Date.now() / speed) % text.length;
+  for (let i = 0; i < text.length; i++) {
+    const ch    = text[i];
+    const isLit = i === litIndex;
+    ctx.fillStyle   = isLit ? litColor  : baseColor;
+    ctx.shadowColor = isLit ? litColor  : "transparent";
+    ctx.shadowBlur  = isLit ? 18 : 0;
+    ctx.fillText(ch, curX, y);
+    curX += ctx.measureText(ch).width;
+  }
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
 /** Nakładka INSERT COIN */
 function drawWaitForStartOverlay() {
   if (!ctx) return;
@@ -572,37 +594,42 @@ function drawWaitForStartOverlay() {
   ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
 
-  // HIGHSCORE — góra canvasu
+  // HIGHSCORE — lewy górny róg
   const hs = App._highscore > 0 ? String(App._highscore) : "––––";
-  ctx.font      = "13px 'Courier New', monospace";
-  ctx.fillStyle = p.light ? "#7a5c00" : "#555878";
-  ctx.fillText("HIGHSCORE", CANVAS_W / 2, CANVAS_H / 2 - 110);
-  ctx.font        = "bold 28px 'Courier New', monospace";
-  ctx.fillStyle   = p.light ? "#7a5c00" : "#f0d400";
-  ctx.shadowColor = p.light ? "#7a5c00" : "#f0d400";
-  ctx.shadowBlur  = p.light ? 0 : 12;
-  ctx.fillText(hs, CANVAS_W / 2, CANVAS_H / 2 - 78);
-  ctx.shadowBlur = 0;
+  const hsBlink = (Date.now() % 1000) < 500;
+  ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.font = "11px 'Courier New', monospace";
+  ctx.fillStyle = p.light ? "#a07800" : "#8899cc";
+  ctx.fillText("HIGHSCORE", 10, 10);
+  if (hsBlink) {
+    ctx.font = "bold 20px 'Courier New', monospace";
+    ctx.fillStyle = p.light ? "#7a5c00" : "#f0d400";
+    ctx.shadowColor = p.light ? "#7a5c00" : "#f0d400";
+    ctx.shadowBlur = p.light ? 0 : 10;
+    ctx.fillText(hs, 10, 26);
+    ctx.shadowBlur = 0;
+  }
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
 
   // INSERT COIN — blink
   const blink = (Date.now() % 1000) < 500;
   if (blink) {
-    ctx.font        = "bold 32px 'Courier New', monospace";
-    ctx.fillStyle   = p.light ? "#e06500" : "#ffee00";
+    ctx.font = "bold 32px 'Courier New', monospace";
+    ctx.fillStyle = p.light ? "#e06500" : "#ffee00";
     ctx.shadowColor = p.light ? "#e06500" : "#ffee00";
-    ctx.shadowBlur  = p.light ? 0 : 16;
+    ctx.shadowBlur = p.light ? 0 : 16;
     ctx.fillText("INSERT COIN", CANVAS_W / 2, CANVAS_H / 2 - 20);
     ctx.shadowBlur = 0;
   }
 
-  ctx.font      = "16px 'Courier New', monospace";
+  ctx.font = "16px 'Courier New', monospace";
   ctx.fillStyle = p.light ? "#1a2252" : "#aaaacc";
-  ctx.fillText("Naciśnij [P] lub kliknij START", CANVAS_W / 2, CANVAS_H / 2 + 22);
+  ctx.fillText("Nacisnij [P] lub kliknij START", CANVAS_W / 2, CANVAS_H / 2 + 22);
 
   const nick = (document.getElementById("playerNick")?.value ?? "").trim();
-  ctx.font      = "18px 'Courier New', monospace";
+  ctx.font = "18px 'Courier New', monospace";
   ctx.fillStyle = nick ? (p.light ? "#006b3c" : "#00dd74") : (p.light ? "#3a468a" : "#888899");
-  ctx.fillText(nick ? `GRACZ: ${nick}` : "Wpisz nick w panelu →", CANVAS_W / 2, CANVAS_H / 2 + 62);
+  ctx.fillText(nick ? `GRACZ: ${nick}` : "Wpisz nick w panelu", CANVAS_W / 2, CANVAS_H / 2 + 62);
 }
 
 let _insertCoinRafId = null;
@@ -1194,6 +1221,7 @@ function onToggleTheme(checkbox) {
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem("theme", theme);
 }
+
 
 // ---------------------------------------------------------------------------
 // INSTRUKCJA OBSŁUGI — TOGGLE (zwijanie / rozwijanie panelu)
