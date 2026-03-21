@@ -72,18 +72,104 @@ header::after {
   box-shadow: 0 0 12px var(--pink), 0 0 24px var(--cyan);
 }
 
+.header-dot-row {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 6px;
+  margin-top: -3px;
+  background-image: radial-gradient(circle, rgba(200,200,255,0.55) 2.5px, transparent 2.5px);
+  background-size: 28px 6px;
+  background-position: 14px center;
+  z-index: 0;
+  pointer-events: none;
+  animation: hdot-clip 9s linear 1 forwards;
+}
+
+@keyframes hdot-clip {
+  0%, 4.5%      { clip-path: inset(0 0% 0 0%);    }
+  95.5%, 100%   { clip-path: inset(0 0% 0 100%);  }
+}
+
+.header-pacman-wrap {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  margin-top: -15px;
+  width: 30px;
+  height: 30px;
+  z-index: 1;
+  animation: hpac-move 9s linear 1 forwards;
+}
+
+.header-pacman {
+  position: absolute;
+  inset: 0;
+  background: #f0d400;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(240,212,0,0.5);
+  animation: hpac-mouth 0.2s ease-in-out infinite alternate;
+  clip-path: polygon(50% 50%, 100% 27%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 73%);
+}
+
+.header-pacman-eye {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #04040f;
+  border-radius: 50%;
+  top: 7px;
+  left: 17px;
+}
+
+@keyframes hpac-move {
+  from { left: -5%; }
+  to   { left: 105%; }
+}
+
+@keyframes hpac-appear {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  35%  { opacity: 0; }
+  50%  { opacity: 1; }
+  65%  { opacity: 0; }
+  80%  { opacity: 1; }
+  90%  { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+@keyframes hpac-mouth {
+  from { clip-path: polygon(50% 50%, 100% 27%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 73%); }
+  to   { clip-path: polygon(50% 50%, 100% 50%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 50%); }
+}
+
 .logo {
+  position: relative;
+  z-index: 2;
   font-size: 2.2rem;
   font-weight: 900;
   letter-spacing: 8px;
+  transform: translateX(-18px);
   background: linear-gradient(100deg, var(--pink) 0%, var(--cyan) 55%, var(--yellow) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 5px rgba(255,45,155,0.85)) drop-shadow(0 0 14px rgba(255,45,155,0.45)) drop-shadow(0 0 22px rgba(0,200,216,0.4));
+  filter: drop-shadow(0 0 4px rgba(255,45,155,0.7)) drop-shadow(0 0 10px rgba(0,200,216,0.35));
   line-height: 1;
-  margin-bottom: 10px;
-  animation: logo-flicker 3.5s steps(1) infinite;
+}
+
+.logo-ready {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+.logo-ready.logo-flickering {
+  animation: logo-flicker 0.45s steps(1) forwards !important;
+}
+
+.logo-flickering {
+  animation: logo-flicker 0.45s steps(1) forwards;
 }
 
 .subtitle {
@@ -1054,6 +1140,8 @@ footer {
   align-items: center;
   gap: 6px;
   z-index: 10;
+  opacity: 0;
+  animation: hpac-appear 1.2s steps(1) 8s forwards;
 }
 
 .theme-icon {
@@ -1061,6 +1149,10 @@ footer {
   color: var(--text-mid);
   user-select: none;
   transition: color 0.2s;
+}
+
+.theme-icon:last-child {
+  font-size: 1.4rem;
 }
 
 /* Mały toggle (38×20) dla headera */
@@ -1175,33 +1267,23 @@ footer {
 
 /* Miganie logo (CRT flicker) */
 @keyframes logo-flicker {
-  0%,  78%, 100% {
-    filter: drop-shadow(0 0 8px rgba(255,45,155,0.9))
-            drop-shadow(0 0 20px rgba(255,45,155,0.6))
-            drop-shadow(0 0 35px rgba(0,200,216,0.55));
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(255,45,155,0.7))
+            drop-shadow(0 0 10px rgba(0,200,216,0.35));
     opacity: 1;
   }
-  80% {
-    filter: drop-shadow(0 0 3px rgba(255,45,155,0.4))
-            drop-shadow(0 0 8px rgba(255,45,155,0.25));
+  22% {
+    filter: drop-shadow(0 0 2px rgba(255,45,155,0.3));
     opacity: 0.72;
   }
-  84% {
-    filter: drop-shadow(0 0 6px rgba(255,45,155,0.9))
-            drop-shadow(0 0 16px rgba(255,45,155,0.55))
-            drop-shadow(0 0 26px rgba(0,200,216,0.5));
+  44% {
+    filter: drop-shadow(0 0 5px rgba(255,45,155,0.8))
+            drop-shadow(0 0 13px rgba(0,200,216,0.45));
     opacity: 1;
   }
-  87% {
-    filter: drop-shadow(0 0 4px rgba(255,45,155,0.45))
-            drop-shadow(0 0 10px rgba(255,45,155,0.3));
-    opacity: 0.80;
-  }
-  90% {
-    filter: drop-shadow(0 0 5px rgba(255,45,155,0.85))
-            drop-shadow(0 0 14px rgba(255,45,155,0.45))
-            drop-shadow(0 0 22px rgba(0,200,216,0.4));
-    opacity: 1;
+  66% {
+    filter: drop-shadow(0 0 2px rgba(255,45,155,0.35));
+    opacity: 0.78;
   }
 }
 

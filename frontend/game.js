@@ -350,12 +350,6 @@ function drawPowerBar(timer) {
   ctx.fillStyle = `rgb(${r}, ${g}, 0)`;
   ctx.fillRect(0, BAR_Y, barW, BAR_H);
 
-  // etykieta
-  ctx.fillStyle = "#ffffff";
-  ctx.font      = "bold 10px monospace";
-  ctx.textAlign = "center";
-  ctx.fillText("POWER", CANVAS_W / 2, BAR_Y + BAR_H - 1);
-  ctx.textAlign = "left";
 }
 
 function render() {
@@ -598,7 +592,7 @@ function drawWaitForStartOverlay() {
   const hs = App._highscore > 0 ? String(App._highscore) : "––––";
   const hsBlink = (Date.now() % 1000) < 500;
   ctx.textAlign = "left"; ctx.textBaseline = "top";
-  ctx.font = "11px 'Courier New', monospace";
+  ctx.font = "14px 'Courier New', monospace";
   ctx.fillStyle = p.light ? "#a07800" : "#8899cc";
   ctx.fillText("HIGHSCORE", 10, 10);
   if (hsBlink) {
@@ -1222,6 +1216,72 @@ function onToggleTheme(checkbox) {
   localStorage.setItem("theme", theme);
 }
 
+// ---------------------------------------------------------------------------
+// LOGO — losowe mruganie co 3–10 s
+// ---------------------------------------------------------------------------
+function initLogoFlicker() {
+  const logo   = document.querySelector('.logo');
+  const header = document.querySelector('header');
+  if (!logo || !header) return;
+
+  // Rozbij napis na litery — każda w osobnym <span>
+  const text = logo.textContent;
+  logo.innerHTML = '';
+  const letterSpans = [];
+
+  [...text].forEach(ch => {
+    const span = document.createElement('span');
+    span.style.display = 'inline';
+    span.textContent = ch;
+    if (ch !== '\u00a0') {
+      span.style.opacity = '0';
+      letterSpans.push(span);
+    }
+    logo.appendChild(span);
+  });
+
+  // Poczekaj na załadowanie fontów, potem zmierz pozycje
+  document.fonts.ready.then(() => {
+    const headerW    = header.offsetWidth;
+    const headerLeft = header.getBoundingClientRect().left;
+    const pacWpct    = 30 / headerW * 100; // szerokość Pac-Mana jako % headera
+    let maxDelay = 0;
+
+    letterSpans.forEach(span => {
+      const rect  = span.getBoundingClientRect();
+      const pct   = (rect.left - headerLeft + rect.width / 2) / headerW * 100;
+      // Pac-Man startuje lewą krawędzią od -5%, usta (prawa krawędź) = left + pacWpct
+      // Usta docierają do litery gdy: -5 + 110*t/9 + pacWpct = pct
+      const delay = Math.max(0, 9 * (pct - pacWpct + 5) / 110 - 0.5); // sekundy
+      if (delay > maxDelay) maxDelay = delay;
+
+      setTimeout(() => {
+        span.style.animation = 'hpac-appear 0.9s steps(1) forwards';
+        span.addEventListener('animationend', () => {
+          span.style.opacity  = '1';
+          span.style.animation = 'none';
+        }, { once: true });
+      }, delay * 1000);
+    });
+
+    // Po ostatniej literce + czas animacji: startuj losowe mruganie całego napisu
+    setTimeout(() => {
+      logo.classList.add('logo-ready');
+      function scheduleNext() {
+        const d = 3000 + Math.random() * 7000;
+        setTimeout(() => {
+          logo.classList.add('logo-flickering');
+          logo.addEventListener('animationend', () => {
+            logo.classList.remove('logo-flickering');
+            scheduleNext();
+          }, { once: true });
+        }, d);
+      }
+      scheduleNext();
+    }, (maxDelay + 1.2) * 1000);
+  });
+}
+
 
 // ---------------------------------------------------------------------------
 // INSTRUKCJA OBSŁUGI — TOGGLE (zwijanie / rozwijanie panelu)
@@ -1345,6 +1405,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   initViewMode();
   initDOM();
+  initLogoFlicker();
   setupKeyboard();
   setMode("play");
 
