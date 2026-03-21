@@ -71,7 +71,73 @@ const App = {
   gameReady:        false,        // true dopiero po zakończeniu resetu — blokuje fałszywy handleGameOver
   gameStarted:      false,        // true gdy gracz nacisnął P — od tego momentu liczy się czas
   countdown:        null,         // null lub liczba 3/2/1/0 podczas odliczania
+  flashAlpha:       0,            // czerwony flash gdy duszek złapie Pac-Mana
+  waitingForStart:  false,        // true gdy czekamy na naciśnięcie P (INSERT COIN)
+  prevScore:        0,            // poprzedni wynik (do wykrywania zjedzenia kropki)
+  countdownStartTime: null,       // czas startu bieżącej sekundy odliczania
 };
+
+// ---------------------------------------------------------------------------
+// DŹWIĘKI RETRO (Web Audio API)
+// ---------------------------------------------------------------------------
+let _audioCtx = null;
+function _getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+
+function playSound(type) {
+  try {
+    const ctx = _getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const t = ctx.currentTime;
+    if (type === "dot") {
+      osc.type = "square";
+      osc.frequency.setValueAtTime(880, t);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc.start(t); osc.stop(t + 0.08);
+    } else if (type === "power") {
+      osc.type = "square";
+      osc.frequency.setValueAtTime(440, t);
+      osc.frequency.linearRampToValueAtTime(880, t + 0.2);
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.start(t); osc.stop(t + 0.25);
+    } else if (type === "catch") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(600, t);
+      osc.frequency.linearRampToValueAtTime(80, t + 0.5);
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      osc.start(t); osc.stop(t + 0.5);
+    } else if (type === "win") {
+      osc.type = "square";
+      osc.frequency.setValueAtTime(523, t);
+      osc.frequency.setValueAtTime(659, t + 0.1);
+      osc.frequency.setValueAtTime(784, t + 0.2);
+      osc.frequency.setValueAtTime(1047, t + 0.3);
+      gain.gain.setValueAtTime(0.1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      osc.start(t); osc.stop(t + 0.5);
+    } else if (type === "countdown") {
+      osc.type = "square";
+      osc.frequency.setValueAtTime(440, t);
+      gain.gain.setValueAtTime(0.1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      osc.start(t); osc.stop(t + 0.12);
+    } else if (type === "go") {
+      osc.type = "square";
+      osc.frequency.setValueAtTime(880, t);
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      osc.start(t); osc.stop(t + 0.2);
+    }
+  } catch(e) {}
+}
 
 // ---------------------------------------------------------------------------
 // ELEMENTY DOM
@@ -119,11 +185,13 @@ async function initGame(level = 1) {
     App.gameStartTime = null;
     App.gameStarted   = false;
     App.countdown     = null;
+    App.waitingForStart = false;
     App.gameReady     = true;
     updateGameState(data);
     updateHUD(data);
     render();
-    drawWaitForStartOverlay();
+    App.waitingForStart = true;
+    _startInsertCoinLoop();
   } catch (e) {
     setStatus("❌ Błąd połączenia z backendem: " + e.message);
   }
@@ -132,9 +200,15 @@ async function initGame(level = 1) {
 // ---------------------------------------------------------------------------
 // PĘTLA GRY (tryb PLAY)
 // ---------------------------------------------------------------------------
+function tickMsForLevel(level) {
+  if (level === 2) return 110;
+  if (level === 3) return 75;
+  return 150; // level 1
+}
+
 function startGameLoop() {
   stopGameLoop();
-  App.gameLoopId = setInterval(gameTick, TICK_MS);
+  App.gameLoopId = setInterval(gameTick, tickMsForLevel(App.currentLevel));
 }
 
 function stopGameLoop() {
@@ -188,6 +262,13 @@ function updateGameState(data) {
   App.animFrame++;
   App.mouthOpen = (App.animFrame % 4) < 2;
 
+  // Dźwięki zjadania kropek (tylko podczas aktywnej gry gracza)
+  if (App.gameStarted && data.score > (App.prevScore ?? 0)) {
+    const diff = data.score - (App.prevScore ?? 0);
+    playSound(diff >= 50 ? "power" : "dot");
+  }
+  App.prevScore = data.score ?? 0;
+
   // Reakcja na koniec gry (tylko gdy gra faktycznie wystartowała)
   if (data.done && App.gameReady) {
     handleGameOver(data);
@@ -198,6 +279,21 @@ function handleGameOver(data) {
   const isWin = data.game_won;
   const msg   = isWin ? "PAC-MAN WYGRYWA!" : "DUSZEK ZŁAPAŁ PAC-MANA!";
   drawGameOverOverlay(msg, isWin);
+
+  // Dźwięk końca gry
+  playSound(isWin ? "win" : "catch");
+
+  // Czerwony flash przy przegranej
+  if (!isWin) {
+    App.flashAlpha = 1.0;
+    function fadeFlash() {
+      App.flashAlpha -= 0.06;
+      if (App.flashAlpha < 0) App.flashAlpha = 0;
+      render();
+      if (App.flashAlpha > 0) requestAnimationFrame(fadeFlash);
+    }
+    requestAnimationFrame(fadeFlash);
+  }
 
   // Zapisz wynik na tablicy (wygrana i przegrana)
   if (!App.scoreSubmitted) {
@@ -270,6 +366,11 @@ function render() {
   drawPacman(gs.pacman, App.mouthOpen, App.currentDirection);
   drawGhost(gs.ghost, gs.power_mode);
   if (gs.power_mode) drawPowerBar(gs.power_timer);
+
+  if (App.flashAlpha > 0) {
+    ctx.fillStyle = `rgba(255,0,0,${App.flashAlpha})`;
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  }
 
   if (App.countdown !== null) {
     drawCountdownOverlay();
@@ -458,25 +559,45 @@ function drawGhost(pos, powerMode) {
   }
 }
 
-/** Nakładka "naciśnij P aby rozpocząć" */
+/** Nakładka INSERT COIN (miga co 600ms) */
 function drawWaitForStartOverlay() {
   if (!ctx) return;
   const p = canvasPalette();
   ctx.fillStyle = p.overlay;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
   ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
-  ctx.font         = "bold 28px 'Courier New', monospace";
-  ctx.fillStyle    = p.light ? "#e06500" : "#ffee00";
-  ctx.shadowColor  = p.light ? "#e06500" : "#ffee00";
-  ctx.shadowBlur   = p.light ? 0 : 14;
-  ctx.fillText("GOTOWY?", CANVAS_W / 2, CANVAS_H / 2 - 22);
 
-  ctx.shadowBlur  = 0;
-  ctx.font        = "16px 'Courier New', monospace";
-  ctx.fillStyle   = p.light ? "#1a2252" : "#aaaacc";
-  ctx.fillText("Naciśnij [P] lub kliknij START", CANVAS_W / 2, CANVAS_H / 2 + 18);
+  // INSERT COIN — blink every 600ms
+  const blink = Math.floor(Date.now() / 600) % 2 === 0;
+  if (blink) {
+    ctx.font      = "bold 32px 'Courier New', monospace";
+    ctx.fillStyle = p.light ? "#e06500" : "#ffee00";
+    ctx.shadowColor = p.light ? "#e06500" : "#ffee00";
+    ctx.shadowBlur  = p.light ? 0 : 16;
+    ctx.fillText("INSERT COIN", CANVAS_W / 2, CANVAS_H / 2 - 40);
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.font      = "16px 'Courier New', monospace";
+  ctx.fillStyle = p.light ? "#1a2252" : "#aaaacc";
+  ctx.fillText("Naciśnij [P] lub kliknij START", CANVAS_W / 2, CANVAS_H / 2 + 5);
+
+  const nick = (document.getElementById("playerNick")?.value ?? "").trim();
+  ctx.font      = "14px 'Courier New', monospace";
+  ctx.fillStyle = nick ? (p.light ? "#006b3c" : "#00dd74") : (p.light ? "#3a468a" : "#555878");
+  ctx.fillText(nick ? `GRACZ: ${nick}` : "Wpisz nick w panelu →", CANVAS_W / 2, CANVAS_H / 2 + 40);
+}
+
+let _insertCoinRafId = null;
+function _startInsertCoinLoop() {
+  if (_insertCoinRafId) cancelAnimationFrame(_insertCoinRafId);
+  function loop() {
+    if (!App.waitingForStart) { _insertCoinRafId = null; return; }
+    if (!App.gameStarted && App.countdown === null) drawWaitForStartOverlay();
+    _insertCoinRafId = requestAnimationFrame(loop);
+  }
+  _insertCoinRafId = requestAnimationFrame(loop);
 }
 
 function startGame() {
@@ -485,10 +606,20 @@ function startGame() {
   const gs = App.gameState;
   if (gs && gs.done) return;
   if (App.countdown !== null) return;
+  App.waitingForStart = false;
   App.countdown = 3;
+  App.countdownStartTime = Date.now();
   render();
+  function _runCountdownRender() {
+    if (App.countdown === null) return;
+    drawCountdownOverlay();
+    requestAnimationFrame(_runCountdownRender);
+  }
+  _runCountdownRender();
   const tick = setInterval(() => {
+    playSound(App.countdown > 0 ? "countdown" : "go");
     App.countdown--;
+    App.countdownStartTime = Date.now();
     if (App.countdown <= 0) {
       clearInterval(tick);
       App.countdown     = null;
@@ -503,15 +634,26 @@ function drawCountdownOverlay() {
   const p = canvasPalette();
   ctx.fillStyle = p.overlay;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  const elapsed = App.countdownStartTime ? (Date.now() - App.countdownStartTime) / 1000 : 0;
+  // scale: starts big (1.6), shrinks to 1.0
+  const scale = 1.6 - 0.6 * Math.min(elapsed, 1.0);
+  const label = App.countdown > 0 ? String(App.countdown) : "START";
+  const baseSize = App.countdown > 0 ? 120 : 72;
+  const size = Math.round(baseSize * scale);
+
+  ctx.save();
   ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
-  const label = App.countdown > 0 ? String(App.countdown) : "START";
-  const size  = App.countdown > 0 ? 120 : 72;
   ctx.font        = `bold ${size}px 'Courier New', monospace`;
   ctx.fillStyle   = App.countdown > 0 ? "#f0d400" : "#00dd74";
   ctx.shadowColor = App.countdown > 0 ? "#f0d400" : "#00dd74";
   ctx.shadowBlur  = 30;
+  // fade in: alpha goes from 0.3 to 1.0 quickly
+  const alpha = Math.min(1, elapsed * 5);
+  ctx.globalAlpha = alpha;
   ctx.fillText(label, CANVAS_W / 2, CANVAS_H / 2);
+  ctx.restore();
   ctx.shadowBlur  = 0;
 }
 

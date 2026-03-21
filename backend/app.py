@@ -537,6 +537,7 @@ def post_score():
             "date":  datetime.now().strftime("%Y-%m-%d %H:%M"),
         }
         scores.setdefault(level, []).append(entry)
+        scores[level] = sorted(scores[level], key=lambda x: (-x["score"], x.get("time", 99999)))[:10]
         _save_scores(scores)
 
         entries = sorted(scores[level], key=lambda x: (-x["score"], x.get("time", 99999)))
