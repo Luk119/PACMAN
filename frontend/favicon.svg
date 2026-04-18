@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" fill="#04040f"/>
+  <!-- Pac-Man skierowany w prawo, usta otwarte ~40 stopni -->
+  <path d="M16,16 L29,10 A13,13 0 1,0 29,22 Z" fill="#f0d400"/>
+  <!-- Oko -->
+  <circle cx="20" cy="10" r="1.8" fill="#04040f"/>
+</svg>

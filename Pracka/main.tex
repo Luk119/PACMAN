@@ -1,0 +1,787 @@
+\documentclass{iiuwb}
+\usepackage[polish]{babel}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{indentfirst}
+\usepackage{xcolor}
+\usepackage{epstopdf}
+\usepackage{hyperref}
+\usepackage[normalem]{ulem}
+\usepackage{xcolor}
+\usepackage{amsmath} 
+
+\renewcommand{\imiona}{Łukasz}
+\renewcommand{\nazwiska}{Kundzicz}
+\renewcommand{\stopienpromotora}{dr}
+\renewcommand{\imionapromotora}{Aneta}
+\renewcommand{\nazwiskapromotora}{Polewko-Klim}
+%\renewcommand{\rodzajpracy}{PRACA LICENCJACKA}
+\renewcommand{\rok}{2025}
+\renewcommand{\tytul}{Implementacja algorytmu Deep Q-Learning w grze komputerowej}
+\renewcommand{\zaklad}{Informatyki}
+\renewcommand{\nazwiskaasystenta}{}
+
+
+\begin{document}
+\tableofcontents
+\cleardoublepage
+\chapter*{Wstęp}
+\label{cha:Wstep}
+\addcontentsline{toc}{chapter}{Wstęp}
+
+Systemy sztucznej inteligencji coraz częściej przyciągają uwagę i stają się popularnym sposobem rozwiązywania problemów różnych dziedzin. Wraz z nimi kluczowe znaczenie odgrywają metody, które pozwalają programom samodzielnie podejmować decyzje, bez dostępu do zestawu danych, bez udziału użytkownika, bez zewnętrznego nadzoru. Jednym z fundamentalnych pojęć tego zagadnienia jest \textbf{uczenie ze wzmocnieniem} - technika aktualnie intensywnie rozwijana, znajdująca zastosowanie w różnych dziedzinach tj. robotyka, tworzenie autonomicznych systemów czy gry komputerowe. Rosnąca popularność tematu oraz praktyczna użyteczność są moją główną motywacją pojęcia tematu niniejszej pracy.
+
+Celem pracy jest stworzenie webowej wersji gry Pac-Man, gdzie kontrola nad ruchami postaci przeciwnika zostanie powierzona agentowi uczonemu poprzez metodę Deep Q-Learning (DQL). Projekt przewiduje implementację gry, jak również projekt środowiska do treningu agenta \textcolor{red}{oraz analizę wyników jego działania}. Skupię się na praktycznym pokazaniu, jak XXXX (DQN) radzi sobie w środowisku gry 2D, która będzie wymagać odpowiedniej strategii(planowania trasy, unikania zagrożeń, zdobywania punktów). Pac-Man będzie dobrym scenariuszem treningowym dla agenta, gdyż gra wymaga planowania i regularnego podejmowania decyzji w dynamicznym środowisku.
+
+Prace dostępne w internecie przeważnie wykorzystują uczenie ze wzmocnieniem na gotowych środowiskach tj. Atari czy OpenAI Gym. Stworzenie środowiska samodzielnie - tak jak w moim przypadku gry webowej - jest rzadziej spotykane, niemniej jednak równie wartościowe, a nawet bardziej wymagające. Pozwala ocenić i poznać dokładnie działanie algorytmu, ale również samodzielnie zaprojektować mechanikę rozgrywki, system nagradzania czy sposób reprezentacji stanów, co daje możliwość dokładnego zrozumienia procesu uczenia DQL.
+
+Struktura pracy przedstawia się następująco:
+W rozdziale 1 Opis podstaw uczenia ze wzmocnieniem oraz definicje kluczowych pojęć.
+W rozdziale 2 Opis gier dostępnych z wykorzystaniem uczenia ze wzmocnieniem w internecie
+W rozdziale 3 ????????????
+W rozdziale 4 ?????????????
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter{Wprowadzenie do wybranych zagadnień uczenia ze wzmocnieniem}
+\label{cha:Dlaczego LaTeX}
+
+\textbf{Uczenie ze wzmocnieniem} (RL, ang. reinforcement learning) to jedna z trzech kluczowych metod uczenia maszynowego (ML, ang. machine learning), pozostałe to uczenie nadzorowane i nienadzorowane \cite{suttonbarto2018}. Jej początki sięgają lat 50 i 60. W tym okresie pojawiały się pierwsze pomysły na programy, które mogłyby reagować i dostosowywać swoje decyzje do zmiennego środowiska.
+RL to metoda w której tzw. \textbf{agent} zbiera wiedzę poprzez interakcję ze tzw. \textbf{środowiskiem} i obserwację swoich zachowań (w/w pojęcia zostaną szerzej opisane w dalszej części tego rozdziału). Za podjęte decyzje \textbf{agent} dostaje \textbf{nagrody} lub \textbf{kary}, które są dla niego wskaźnikiem czy dokonuje korzystnych wyborów. \textbf{Agent} nie korzysta ze zbioru danych uczących, swoje decyzje podejmuje na bieżąco. Poprzez proces prób i błędów \textbf{agent} uczy się wykonywać polecenia, które przynoszą mu największą \textbf{nagrodę} w długim terminie.
+
+\section{Podstawowe pojęcia}
+% https://www.flowhunt.io/pl/slownik/reinforcement-learning-rl/
+% https://pduch.iis.p.lodz.pl/UzW/Wyklad.pdf
+Poniżej przedstawiono szczegółowy opis pojęć niezbędnych dla charakterystyki \textbf{uczenia ze wzmocnieniem} (RL, ang. reinforcement learning) \cite{flowhunt_rl}, \cite{pduch_rl_wyklad}:
+
+\begin{enumerate}
+    \item \textbf{Agent} – system uczący się wykonywania jak najbardziej optymalnych akcji. Pozwala mu na to obserwacja środowiska w którym się znajduje. Na podstawie tych obserwacji podejmuje decyzje, by osiągać wyznaczone cele.
+    \item \textbf{środowisko (ang. environment)} – jest to przestrzeń w której uczestniczy agent, w środowisku gromadzi informacje i dostosowuje się do panujących zasad. Otoczenie to ma określone warunki i zasady funkcjonowania, które wpływają na zachowanie agenta;
+    \item \textbf{stan (ang. state)} – dany moment, w którym agent się znajduje. W każdym stanie zawierają się informacje, które są wykorzystywane przez agenta do analizy i na ich podstawie podejmowane są akcje. Zmiana w środowisku powoduje utworzenie nowego stanu co za tym idzie, agent otrzymuje nowy zestaw danych;
+    \item \textbf{akcja (ang. action)} – działania podejmowane przez agenta na podstawie aktualnego stanu środowiska. Każda akcja jest wykonywana i prowadzi do konsekwencji, w tym przyznania nagrody. Im bardziej trafny dobór akcji spośród dostępnych możliwości, tym mniejsza przydzielana kara bądź większa nagroda;
+    \item \textbf{nagroda (ang. reward)} – priorytetowa informacja dla agenta, dzięki której wie, czy wykonywane przez niego akcje pozwolą mu osiągnąć cel, czy też go od celu oddalają. Nagrody mogą mieć wartości dodatnie, ujemne lub zero (informacja neutralna);
+    \item \textbf{polityka (ang. policy)} – podstawowa strategia, którą kieruje się agent podczas pracy w danym środowisku. Mówi ona agentowi jakie należy podejmować akcje zależnie od zebranych informacji w aktualnym stanie;
+\end{enumerate}
+
+\section{Klasyfikacja metod uczenia ze wzmocnieniem}
+
+Postawowe typy metod uczenia ze wzmocnieniem stanowią \cite{suttonbarto2018}:
+\begin{itemize}
+    \item \textbf{value-based} - agent uczy się funkcji opisujących wartość stanu lub par stan-akcja, dokonując wyboru akcji, kieruje się najwyższą wartością, (klasyczny Q-Learning należy do w/w typu);
+
+    \item \textbf{policy-based} - agent uczy się polityki (strategii) dokonywania wyboru w pojedynczym stanie, nie wyznacza bezpośrednio wartości funkcji, gdyż nie kieruje się szacowaną wartością podczas podejmowania decyzji; 
+
+    \item \textbf{actor-critic} - połączenie hybrydowe metod value-based i policy-based, w którym aktor uczy się polityki, krytyk natomiast ocenia jakość podjętych decyzji bazując na funkcji wartości;
+
+    
+
+\end{itemize}
+
+
+
+\section{Algorytmy uczenia ze wzmocnieniem}
+% https://web.stanford.edu/class/psych209/Readings/SuttonBartoIPRLBook2ndEd.pdf?
+% q-learning vs deep q-learning
+% https://spotintelligence.com/2025/05/12/deep-q-learning-reinforcement-learning/
+% główne źródło: https://www.baeldung.com/cs/q-learning-vs-deep-q-learning-vs-deep-q-network
+
+\paragraph{Algorytm Q-Learning.} 
+Jedną z podstawowych metod uczenia ze wzmocnieniem typu value-based jest \textit{Q-Learning}. \textit{Q-Learning} to algorytm bezmodelowy tzw. model-free, 
+% co za tym idzie nie musi znać modelu dynamiki środowiska. 
+nie wymaga jawnego modelowania dynamiki środowiska.
+W tym algorytmie agent uczy się poprzez obserwację swoich poprzednich działań. W tej metodzie wartości Q są przechowywane w Tabeli \ref{fig:Q-Learning}. Każdej parze stan-akcja przydziela się wartość liczbową określającą opłacalność wykonania akcji w danym stanie. Wartość Q (ang. Q-value) jest to oczekiwana suma przyszłych nagród (z uwzględnieniem zmniejszenia wpływu nagrody wraz z upływem czasu), jaką agent może uzyskać, wykonując określoną decyzję w poszczególnym stanie. Wysoka wartość Q wskazuje, że podjęcie danej akcji może spowodować przydział wyższej nagrody w przyszłości.
+
+Agent aktualizuje wpisy w tabeli na podstawie nagród otrzymywanych przez środowisko. Uczy się, które akcje poprowadzą do najlepszych wyników w długim terminie. Z biegiem czasu wartości Q zbiegają do rzeczywistych ocen jakości działań. Proces ten pozwala agentowi wypracować optymalną strategię. 
+
+W algorytmie \textit{Q-learningu} aktualizacja wartości Q opiera się na ocenie najlepszej możliwej przyszłej akcji, a nie tej, którą agent wybrał w danym kroku. Ma to szczególne znaczenie wtedy, gdy agent wykonuje ruchy losowe w celu eksploracji środowiska.
+
+Takie podejście sprawdza się najlepiej dla niewielkich środowisk, gdzie liczba akcji i stanów jest na tyle mała, że można je przechować w tabeli Q. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Q-Table.jpg}
+    \caption{Wartości Q przechowywane w tabeli. Źródło: \cite{baeldung2025}}
+    \label{fig:Q-Learning}
+\end{figure}
+
+\paragraph{Algorytm Deep Q-Learning.}
+Algorytm \textit{Deep Q-Learning} (DQN) stanowi rozszerzenie klasycznego algorytmu \textit{Q-Learning}. DQN zamiast tabeli Q używa głębokiej sieci neuronowej, która na podstawie danego stanu oblicza przybliżone wartości Q. 
+Pomimo użycia złożonego modelu, Deep Q-Learning należy do grupy \textbf{model-free}, gdyż nie tworzy modelu dynamiki (nie odtwarza i nie analizuje działań) środowiska, a opiera się wyłącznie na doświadczeniach agenta. To rozwiązanie znajduje zastosowanie w dużych i złożonych środowiskach, w których tabela Q rozrasta się zbyt szybko lub jest niemożliwa do utworzenia.
+
+W DQN na wejście sieci neuronowej przekazywane są aktualne parametry stanu środowiska. Sieć na podstawie parametrów wejściowych oblicza i zwraca wartości Q dla wszystkich dostępnych akcji. Agent używa przewidywań sieci jako zbiór informacji pomagających w podejmowaniu decyzji, z kolei sieć aktualizuje się wykorzystując zgromadzone już doświadczenia. 
+
+Do osiągnięcia stabilnego procesu uczania wykorzystuje się dwie techniki poprawiające jakość szkolenia agenta. 
+Pierwszą z nich jest \textbf{Experience Replay} - agent zapisuje swoje poprzednie doświadczenia tj. akcje, stany, nagrody, przyszłe stany, następnie podczas treningu losowo pobiera przykłady z tego zbioru (Experience Replay buffer). Dzięki temu sieć uczy się na zróżnicowanych danych, a nie tylko na kolejnych krokach jednej ścieżki.
+
+Drugą techniką jest wykorzystywanie \textbf{Target Network} - drugiej sieci neuronowej używanej jako punkt odniesienia podczas aktualizowania wartości Q. \textbf{Target Network} jest aktualizowana rzadziej niż sieć główna, dzięki czemu wartości wykorzystywane jako odniesienie pozostają stabilne i nie zmieniają się z każdym krokiem szkolenia.
+
+Wykorzystanie obu mechanizmów sprawia, że DQN jest w stanie skutecznie uczyć się nawet w złożonych środowiskach. To właśnie dzięki \textbf{Experience Replay} i \textbf{Target Network} udało się stworzyć model, który potrafił uczyć się gry w Atari na podstawie surowych pikseli. Był to przełom w rozwoju metod uczenia ze wzmocnieniem.
+
+
+\clearpage
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{DeepQLearning.png}
+    \caption{Głęboka sieć neuronowa. Źródło: \cite{baeldung2025}}
+    \label{fig:DeepQ-Learning}
+\end{figure}
+\newpage
+\section{Uczenie modelu}
+
+\clearpage
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=0.65\linewidth]{RL.png}
+    \caption{Przykładowy schemat interakcji agenta ze środowiskiem. Źródło:  \cite{baeldung2025}}
+    \label{fig:placeholder}
+\end{figure}
+
+% https://www.flowhunt.io/pl/slownik/reinforcement-learning/
+Uczenie modelu opartego na RL polega na konsekwentnym ulepszaniu sposobu podejmowania decyzji przez agenta. Zadaniem agenta jest dobranie działań do poszczególnych sytuacji tak, aby w długim terminie otrzymywać jak największe wartości liczbowe za nagrody.
+% Autorzy Sutton i Barto opisują ten proces w następujący sposób "Reinforcement learning problems involve learning what to do—how to
+% map situations to actions—so as to maximize a numerical reward signal". \cite{suttonbarto2018}.
+Agent korzysta z informacji zwrotnej generowanej przez środowisko. Po podjętej akcji dostaje karę lub nagrodę, dzięki temu może ocenić czy jego reakcja była właściwa. Z czasem zaczyna dostrzegać, jakie zachowania prowadzą do lepszych wyników, a które należy odrzucać. 
+
+Uczenie dzielimy na kilka części. Na początku agent obserwuje stan w którym się znajduje. Kolejny etap to wybór jednej z wielu dostępnych akcji, którą uznaje za najlepszą. Następnie przydzielana jest odpowiednia wartość nagrody informującą go o jakości wybranej przez niego decyzji. Środowisko udostępnia następny stan, a agent od nowa analizuje otoczenie i podejmuje nową decyzję na podstawie zaaktualizowanych danych. Proces wykonywany jest wielokrotnie, co za tym idzie model jest w stanie budować coraz bardziej skuteczną strategię. Oznacza to, że działania agenta wpływają na to co dzieje się w dalszych etapach uczenia.
+
+Istotnym elementem uczenia modelu jest podział pomiędzy testami nowych zachowań agenta a odkrytymi już działaniami uznanymi za skuteczne. 
+Dzięki tej równowadze agent dąży do szukania jak najlepiej ocenianych zachowań. Z każdą iteracją decyzje agenta stają się pewniejsze, a wyniki stabilniejsze.
+
+W literaturze występują dwa podstawowe podejścia odnoszące się do uczenia agentów: metody \textbf{model-based} oraz \textbf{model-free}.
+
+\textbf{model-based} - agent próbuje odwzorować dynamikę środowiska, przewiduje jakie stany i nagrody mogą pojawić się po wykonaniu określonych akcji. 
+
+\textbf{model-free} - agent nie buduje modelu dynamiki środowiska. Uczy się strategii na podstawie doświadczeń zdobywanych poprzez interakcję ze środowiskiem. Z każdą iteracją poprawia szacunki wartości działań, wielokrotne powtarzanie pozwala poprawiać jego decyzje w przyszłości. 
+
+
+
+
+\clearpage
+\section{Walidacja modelu}
+Walidacja modelu w uczeniu ze wzmocnieniem polega na poddawaniu ocenie wyćwiczonego agenta. Badając wybory agenta w środowisku jesteśmy w stanie oceniać skuteczność jego działania. Stosowanie metryk pozwala łatwiej analizować proces uczenia agenta, a przede wszystkim pomaga przy dobieraniu nagród gdy wypracowana strategia nie jest coraz bardziej skuteczna z biegiem czasu.
+Do oceny wykorzystuje się różne metryki takie jak:
+
+\begin{itemize}
+\item \textbf{Zliczanie wygranych}
+Jest to zliczanie i zapisywanie rozgrywek, w których agent osiągnął wyznaczony cel główny. Gromadzenie tych danych podczas treningu agenta pozwala obserwować postępy agenta na żywo. Znaczne zwiększenie wygranych mówi o podejmowaniu przez agenta lepszych decyzji, a także o dobieraniu bardziej skutecznej strategii w aktualnie panujących warunkach. Jest to jedna z najbardziej podstawowych, ale również najbardziej miarodajnych metryk (gdy chodzi o maksymalizację zwycięstw przez agenta).  
+\begin{equation}
+{W} = \sum_{i=1}^{N} {w_i}
+\end{equation}
+\noindent
+gdzie:
+\begin{itemize}
+    \item $W$ — całkowita liczba wygranych agenta w trakcie wszystkich epizodów,
+    \item $N$ — liczba ukończonych epizodów,
+    \item $w_i$ — wynik $i$-tego epizodu, przyjmujący wartość:
+    \[
+        w_i =
+        \begin{cases}
+        1, & \text{jeżeli agent osiągnął cel w epizodzie } i,\\
+        0, & \text{w przeciwnym wypadku},
+        \end{cases}
+    \]
+    \item $i$ — indeks epizodu, $i = 1,2,\dots,N$.
+\end{itemize}
+
+\item \textbf{Średnia nagroda skumulowana}
+Jest to suma nagród i kar zebranych przez agenta w trakcie trwania pełnego epizodu podzielona przez liczbę wszystkich ukończonych epizodów. Można ją opisać wzorem
+\begin{equation}
+\bar{R} = \frac{1}{N} \sum_{i=1}^{N} R_i
+\end{equation}
+\noindent
+gdzie:
+\begin{itemize}
+    \item $\bar{R}$ — średnia nagroda skumulowana przypadająca na jeden epizod,
+    \item $N$ — liczba ukończonych epizodów,
+    \item $R_i$ — skumulowana nagroda (suma nagród i kar) uzyskana w $i$-tym epizodzie,
+    \item $i$ — indeks epizodu, $i = 1,2,\dots,N$.
+\end{itemize}
+Każdy krok jest rozstrzygnięciem jaką nagrodę lub karę - wartość liczbową otrzyma agent za podjętą decyzję i wykonaną akcję. Zmiana wartości tej metryki pokazuje czy agent z powtarzalnością wykonuje akcje, które są najwyżej oceniane. Dzięki niej widzimy postępy agenta, niezależnie czy osiąga cel główny czy nie. Jest to metryka bardziej szczegółowa od zliczania wygranych.
+
+\item \textbf{Średni dystans gracza od przeciwnika}
+Jest to metryka szczególnie przydatna w grach, w których celem jest pościg lub ucieczka. Dzięki tej metryce możemy analizować i manipulować systemem kar i nagród tak, aby agent dostosowywał satysfakcjonującą odległość od gracza.\\ 
+W pościgu zależy nam, aby przez większość czasu średni dystans był jak najkrótszy, a w ucieczce odległość powinna być jak największa. Wszystko to pod warunkiem, że zależy nam na jak najwyższej skuteczności, a nie na dostosowywaniu zdolności agenta do umiejętności gracza.
+
+\begin{equation}
+\bar{D} = \frac{1}{T} \sum_{i=1}^{T} D_i
+\end{equation}
+
+\noindent
+gdzie:
+\begin{itemize}
+    \item $\bar{D}$ — średni dystans gracza od przeciwnika,
+    \item $T$ — liczba kroków w epizodzie,
+    \item $D_i$ — odległość między agentem a przeciwnikiem w $i$-tym kroku epizodu,
+    \item $i$ — indeks kroku czasowego, $i = 1,2,\dots,T$.
+\end{itemize}
+\item \textbf{Odsetek epizodów zakończonych limitem kroków}
+Jest to iloraz epizodów, które zakończyły się niepowodzeniem poprzez upływ ustalonej maksymalnej liczby kroków dzielony przez liczbę wszystkich rozegranych epizodów. Ta metryka pozwala określać czy strategia agenta jest rozwojowa. Należy jednak pamiętać, że w przypadku zakończenia epizodu poprzez przekroczenie limitu kroków nie uwzględnia jakości działania agenta. Epizod, w którym agent był bliski osiągnięcia celu, jest traktowany tak samo jak epizod, w którym agent przez cały czas działał nieskutecznie.
+
+\begin{equation}
+F = \frac{1}{N} \sum_{i=1}^{N} f_i
+\end{equation}
+gdzie:
+\begin{itemize}
+    \item $F$ — odsetek epizodów zakończonych limitem kroków
+    \item $N$ — liczba wszystkich rozegranych epizodów
+    \item $f_i$ — wskaźnik epizodu, przyjmujący wartość 1 jeśli epizod $i$ zakończył się upływem limitu kroków, 0 w przeciwnym wypadku
+    \item $i$ — indeks epizodu, $i = 1,2,\dots,N$
+\end{itemize}
+
+% Informally, the
+% agent’s goal is to maximize the total amount of reward it receives. This means
+% maximizing not immediate reward, but cumulative reward in the long run.
+
+
+
+\chapter{Przegląd gier webowych w których wykorzystanio algorytmy uczenia ze wzmocnieniem - z naciskiem na mój algorytm lub bardzo podobne}
+
+% \section{Nazwa gry}
+% o czym jest ta gra (scenariusze, krótki opis), w jakiej technologii (jakie pakiety), kiedy powstała, jaki algorytm UzW użyto, (1/2 str)
+Poniżej zostaną opisane/przedstawione wybrane istniejące gry 2D i 3D, w których do uczenia agentów wykorzystano algorytmy ze wzmocnieniem m.in. algorytm Deep Q-Learning(DQN).
+
+\paragraph{Atari Breakout.}
+% link do artykułu: "https://keras.io/examples/rl/deep_q_network_breakout/"
+
+Gra zręcznościowa \textbf{Atari Breakout} polega na odbijaniu piłeczki, przez gracza AI, w taki sposób aby strąciła wszystkie kolorowe bloki o jednakowych rozmiarach u góry planszy i nie wypadła poza nią, jak pokazano na Rysunku \ref{fig:Breakout}.
+
+Piłka odbija się od ścian bocznych i ściany górnej, paletki gracza oraz bloków. Gracz za pomocą strzałek z klawiatury porusza platformą znajdującą się na dole ekranu w lewo i prawo. W przypadku gdy piłeczka wypada poza dolną krawędź gra zostaje przerwana - poziom rozpoczyna się od nowa.
+
+W w/w grze został użyty algorytm uczenia ze wzmocnieniem typu Deep Q-Learning(DQN)\cite{AtariBreakout}.
+
+Algorytm DQN jest rozszerzeniem klasycznego Q-Learningu, które stosuje konwolucyjną sieć neuronową \cite{Ohnishi}. W połączeniu z czym?umożliwiają agentowi samodzielną naukę strategii czego/kogo pozwalającą ukończyć grę.
+
+W/w gra została zaimplementowana w języku python, wykorzystane pakiety języka python: \textit{tensorflow, os, keras, gymnasium, numpy}\\
+Data utworzenia: 23.05.2020
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{AtariBreakout.jpg}
+    \caption{Rozgrywka Atari Breakout Źródło: \cite{AtariBreakout}}
+    \label{fig:Breakout}
+\end{figure}
+
+\paragraph{Eat Melon.}
+% https://cs.stanford.edu/people/karpathy/convnetjs/demo/rldemo.html
+\textbf{Eat Melon} to gra, w której celem jest unikanie kar (zielone elementy - trucizna) i zbieranie nagród (czerwone elementy - jabłko).
+Planszą jest dwuwymiarowa przestrzeń ogranicznona ścianami oraz zielonymi i czerwonymi punktami.
+
+Agent posiada dziewięć sensorów, które zwrócone są w kierunku w którym podąża gracz. Każdy sensor mierzy trzy wartości odległości: od ściany, trucizn i jabłek. Bot ma do wyboru pięć akcji dotyczących obrotu, następnie po dokonaniu wyboru akcji wykonuje krok na przód. 
+
+Sieć neuronowa Deep Q-Learning\cite{EatMelon} decyduje o tym, którą akcje ma wykonać agent w aktualnych okolicznościach. Na początku akcje są wybierane losowo lecz z biegiem czasu agent uczy się  jakie rekcje dają największą nagrodę w określonych sytuacjach.
+
+Program został zaimplementowany w języku JavaScript z wykorzystaniem pakietu \textit{ConvNetJS}\\
+Data utworzenia ok. 2014
+
+\paragraph{Bubble Shooter.}
+%https://www.tautvidas.com/blog/2019/08/q-learning-bot-for-bubble-shooter/
+W grze \textbf{Bubble Shooter} celem użytkownika jest uzyskanie jak największej liczby punktów poprzez usunięcie ciasno złączonych kolorowych piłek z pola gry u góry ekranu zanim zsuną się one na sam dół. Gracz obiera kierunek w którym piłeczka ma wystrzeić, gdy ta trafia do celu i połączy się w grupę co najmniej 3 piłek o tym samym kolorze, zostaną one usunięte a na konto gracza przydzielone będą punkty - w zależności od wielkości rozbitej grupy. Jednak jeśli po kilku strzałach gracz nie otrzyma punktów wszystkie piłki zaczną się zsuwać, utrudniając partię.
+
+Agent ma do wyboru 35 akcji(różnych kierunków oddania strzału). W tym przypadku nagroda jest przyznawana za skuteczy strzał powodujący usunięcie grupy piłek, w każdym innym przypadku nagroda nie jest przyznawana wcale. 
+
+Bot uczy się przez wykorzystanie algorytmu Dueling Double Deep Q-Learning \cite{BubbleShooter} implementując go z biblioteki TensorFlow. Jest to zaawansowana wersja uczenia ze wzmocnieniem.
+
+Program został zaimplementowany w języku Python, użyte pakiety: \textit{tensorflow, os, cv2, multiprocessing, numpy}\\
+Data utworzenia: 2019
+
+\paragraph{Snake.}
+% https://github.com/tensorflow/tfjs-examples/tree/master/snake-dqn
+\textbf{Snake} to kultowa gra, polegająca na zbieraniu punktów przez węża w taki sposób aby uniknąć uderzenia w samego siebie i krawędź ekranu. Po zebraniu punktu wąż wydłuża się o jedną jednostkę co utrudnia poruszanie się w dalszych etapach gry. Snake może się poruszać w czterech kierunkach: lewo, prawo, góra, dół. Rozgrywkę uznaje się za wygraną w przypadku gdy wąż jest tak "najedzony", że zajmuje całe dostępne miejsce na planszy.
+
+Nagrodę przyznaję się za zebranie punktu oraz karę za kolizję. Agent widzi całe pole gry więc może dokładnie analizować sytuację ustalająć najlepsze decyzje. Początkowe decyzje bota są wykonywane losowo by z czasem wykonywać bardziej optymalne ruchy.
+
+W tym przypadku agent wykorzystuje do nauki algorytm uczenia ze wzmocnieniem Deep Q-Learning \cite{Snake}.
+
+Logika gry została zaimplementowana za pomocą JavaScript oraz wykorzystano pakiet \textit{tensorflow} \\
+Data utworzenia: 2019
+
+\paragraph{TackMania 2020.}
+%https://github.com/trackmania-rl/tmrl?utm_source=chatgpt.com
+\textbf{Trackmania} jest to wyścigowa gra 3D. Rozgrywka polega na przejechaniu toru wyścigowego w jak najkrótszym czasie. Aby mieć lepsze efekty konieczne jest opanowanie sterowania pojazdu oraz realistycznej fizyki gry, która jest mocno rozbudowana. Gra pozwala na tworzenie własnych tras dzięki czemu każdy użytkownik może przełożyć swoją kreatywność na budowę skomplikowanego toru.
+
+Omówiona gra została użyta do projektu, w którym agent wciela się w rolę kierowcy. "Obserwuje" on obraz z gry, pozycję na trasie i prędkość auta aby stworzyć wektor danych przekazywany do sieci neuronowej.
+
+System nagród i kar został skonstruowany w taki sposób, aby nagradzać agenta za poruszanie się wzdłuż toru, unikanie stłuczek oraz płynność w przemieszczaniu się. Karane są natomiast kolizje, zmniejszanie prędkości jazdy, jazda do tyłu. 
+
+Do projektu został użyty algorytm uczenia ze wzmocnieniem Soft Actor-Critic ale jest też wariant z użyciem Randomized Ensembled Double Q-Learning \cite{TrackMania2020}. Soft Actor-Critic cechuje się tym, że jest agent jest nagradzany nie tylko za postęp w grze ale również za eksplorację otoczenia. 
+
+Algorytm zaimplementowany w języku Python,do uczenia ze wzmocnieniem zostały wykorzystane biblioteki: \textit{pytorch, numpy, gym}\\
+Data utworzenia: 2020
+
+% \chapter{xxxx}
+%    Bo jest wygodniejszy i~produkuje ładniejsze dokumenty. Konkretniej:
+
+%         \begin{enumerate}
+%           \item Łatwo jest panować nad formatem dokumentu (wszystko jest jawnie widoczne w~pliku tex), w~\textit{Wordzie} mamy mnóstwo słabo widocznych lub~niewidocznych ustawień, jak puste linie z~różną wielkością czcionki, odstępy po/przed akapitem, odstępy między liniami, możliwe jest pozycjonowanie w~poziomie spacjami, tabulacjami, tabulatorami itp. Każdy element tekstu może mieć własne formatowanie/paragrafowanie, słabo widoczne i~niezgodne z~obowiązującym schematem ogólnym. Generalnie w~\textit{Wordzie} mamy mniejszy lub~większy bałagan, o~ile purytańsko nie~przestrzega się porządku i~zdefiniowanych stylów. Nawet pomimo tego niektóre automatyczne ustawienia jak np. wcięcia wypunktowań bywają przez program ustalane w sposób niezrozumiały dla użytkownika i wymagają poprawy oraz ciągłej uwagi. 
+          
+%           \item Automatyczne i~zawsze aktualne spisy treści, rysunków, listingów i~tabel.
+         
+%           \item Wygodne w~edycji i~automatycznie numerowane formuły matematyczne.
+          
+%           \item Automatyczne formatowanie bibliografii, ,,bazodanowe'' wpisy bibliografii.
+          
+%           \item Szybka zmiana formatu dokumentu czy formatu bibliografii w~razie potrzeby.
+%           \item Pozycjonowanie rysunków i~tabel w~\LaTeX-u jest w pełni \textbf{(1}) automatyczne lecz niestety też zwykle \textbf{(2)} bez~pełnej kontroli użytkownika. Stąd sugeruję świadomy wybór pierwszej opcji. Małe elementy zwykle da~się~umieścić w~wybranym miejscu, z~automatycznym ustawianiem większych elementów w~wybranych przez kompilator miejscach (np.~ góra kolejnej strony) wypada się pogodzić (ostatecznym celem \LaTeX-u jest, żeby zawartość dokumentu była jak~najsensowniej rozmieszczona, co niekiedy kłóci się z poczuciem estetyki autora dokumentu, przyzwyczajonym też często do ręcznego składania dokumentu). W~ porównaniu ze~średnio kontrolowanym pozycjonowaniem rysunków/grafiki w~\textit{MS Word} i~tak jest to~ wygodne. Nawet stosowanie podziałów strony, strony parzystej itp. znaczników może prowadzić do dość nieestetycznych rezultatów.
+          
+%           \item \textit{Last but not least} -- w \LaTeX-u niemożliwa jest przypadkowa modyfikacja stylów, wielokrotne spacje czy tabulacje, niespójne ustawiania akapitów czy pozycjonowanie pustymi liniami, co nagminnie napotkać można w~dokumentach \textit{Worda}.
+%         \end{enumerate}
+
+% \section{Czego używać do~edycji kodu \LaTeX-a?}
+
+%     Możliwości jest bardzo wiele, zależnie od~platformy sprzętowej, ,,purystycznie'' wystarczy notatnik \textit{Windowsa} czy~też~vim, ale~oczywiście dużo wygodniejsze są~dedykowane pakiety jak~Texworks czy~WinEdt. Ostatnio coraz większą popularność zdobywają systemy SaaS, czyli serwisy internetowe --  w~tym~przypadku udostępniające edytor, kompilację oraz~składujące pliki \LaTeX-a w~chmurze. Oczywiste korzyści w~tym przypadku to~dostęp z~poziomu przeglądarki~www, niezależny od~lokalnej maszyny, brak~konieczności instalacji oprogramowania czy~pakietów, prosta konfiguracja, możliwość udostępnienia projektu promotorowi do~pełnego wglądu, komentowania czy~nawet edycji. Dość oczywistym kłopotem może~być z~kolei konieczność dostępu do~Internetu.
+
+%     Najbardziej polecam darmowy SaaS \url{www.overleaf.com} (opis w sekcji \ref{overleaf}). Lokalnie pod \textit{Windows} polecam dość skomplikowany edytor \LaTeX-a WinEdt (opis w sekcji \ref{winedt}).
+
+% \subsection{Polecany edytor online: www.overleaf.com}
+% \label{overleaf}
+% \begin{enumerate}
+% \item Do używania \textit{Overleaf.com} niezbędna jest rejestracja, możemy swobodnie działać na~darmowej licencji.
+% \item Tworzymy pusty projekt (\textit{Blank Project}).
+% \item  Z menu w~górnym lewym rogu wybieramy z~comboboxa Spell Check wartość ,,Polish''.
+% \item Ściągamy ze strony \\
+% \small \url{http://iist.uwb.edu.pl/~m.rybnik/index.php/skarb-dyplomanta-uwb/} \normalsize
+% paczkę zip z projektem przykładowej pracy dyplomowej.
+% \item Przeklejamy lub~kopiujemy zawartość pliku tex w projekcie online zawartością ściągniętego pliku \textit{main.tex}.
+% \item \textit{Upload}-ujemy do projektu pliki \textit{iiuwb.cls} i \textit{biblio.bib} oraz przykładowe grafiki \textit{chords3.eps} oraz \textit{Show02b.jpg}.
+% \item Klikamy \textit{Recompile} i voila! Powinien być utworzony pdf, kompilowany z naszego projektu \LaTeX-a. 
+% \item Piszemy pracę: edytujemy plik tex, dokładamy własne wpisy bibliograficzne do \textit{biblio.bib}, \textit{upload}-ujemy rysunki, itd.
+% \item opcjonalnie udostępniamy pracę promotorowi.
+% \end{enumerate}
+% Mamy też możliwość pokazania części źródła \LaTeX-a w~postaci bogato formatowanej (przycisk \textit{Rich Text} nad kodem dokumentu) oraz intuicyjnej edycji, nie~tracąc równocześnie pełnej kontroli nad~dokumentem z~poziomu źródła! W~celu udostępnienia projektu klikamy \textit{Share} po prawej na~górze i kopiujemy link do odczytu lub edycji. Na przykład projekt overleaf użyty do tego dokumentu jest dostępny do odczytu pod adresem \url{https://www.overleaf.com/read/sxzpkyfjkpxz}. 
+% Więcej w~pomocy online serwisu.
+
+% \subsection{Edytor hardcore pod Windows: WinEdt}
+% \label{winedt}
+%    WinEdt jest dostępny do~darmowego użytku pod~adresem \url{http://www.winedt.com/download.html}, (darmowy do~ewaluacji przez miesiąc, po~miesiącu wyświetla przypomnienia o~ rejestracji). Jest oprogramowaniem o~dużych możliwościach, stąd~i~nieco skomplikowanym.
+%    Podświetla on~składnię, zarządza strukturą, automatyzuje czynności i~sprawdza pisownię. Jako środowisko \LaTeX-a pod \textit{Windows} polecam \textit{MiKTeX}: \url{http://miktex.org/download}. Dodatkowo polecam doinstalować sobie polskie słowniki, zależnie od wersji \textit{WinEdt} jest to~bardziej lub~mniej skomplikowane, czytanie pomocy \textit{WinEdt} niezbędne.
+
+%    Możliwe w~WinEdt jest też m.in. zdefiniowanie skrótów klawiaturowych, nie~wnikając zbytnio w~składnię i~ich ''wyklikiwanie'', poniżej przykład definicji skrótów do~\textit{italicsa}, \textbf{bolda} oraz 4 poziomów nagłówków, zdefiniowane w~sekcji \textit{Shortcuts}, pliku konfiguracyjnego \textit{MainMenu.ini} wersji 7.1 WinEdt. Można zaryzykować bezpośrednie przeklejenie kodu w~podobne miejsce.
+
+% \small
+%  \begin{verbatim}
+%   MENU="Shortcuts"
+%   CAPTION="Shortcuts"
+%   INVISIBLE=1
+%   ITEM="$Format_Selection_Italics"
+%     CAPTION="Format Selection Italics"
+%     MACRO="Exe('%b\Macros\Fonts\Italic.edt');"
+%     SHORTCUT="24649::Shift+Ctrl+I"
+%     REQ_DOCUMENT=1
+%   ITEM="$Format_Selection_Bold"
+%     CAPTION="Format Selection Bold"
+%     MACRO="Exe('%b\Macros\Fonts\Bold.edt');"
+%     SHORTCUT="24642::Shift+Ctrl+B"
+%     REQ_DOCUMENT=1
+
+%     ITEM="$Format_Selection_Chapter"
+%     CAPTION="Format Selection Chapter"
+%     MACRO="Exe('%b\Macros\Sections\Chapter.edt');"
+%     SHORTCUT="24625::Shift+Ctrl+1"
+%     REQ_DOCUMENT=1
+%   ITEM="$Format_Selection_Section"
+%     CAPTION="Format Selection Section"
+%     MACRO="Exe('%b\Macros\Sections\Section.edt');"
+%     SHORTCUT="24626::Shift+Ctrl+2"
+%     REQ_DOCUMENT=1
+%     ITEM="$Format_Selection_SubSection"
+%     CAPTION="Format Selection Subsection"
+%     MACRO="Exe('%b\Macros\Sections\Subsection.edt');"
+%     SHORTCUT="24627::Shift+Ctrl+3"
+%     REQ_DOCUMENT=1
+%     ITEM="$Format_Selection_SubSubSection"
+%     CAPTION="Format Selection Subsubsection"
+%     MACRO="Exe('%b\Macros\Sections\Subsubsection.edt');"
+%     SHORTCUT="24628::Shift+Ctrl+4"
+%     REQ_DOCUMENT=1"
+% \end{verbatim}
+
+% \section{Jak pisać w~\LaTeX-u?}
+
+%    \textit{Google} zwraca na takie zapytanie około $5 \cdot 10^5$ wyników (przykład wyrażenia matematycznego \textit{inline}), nie~ma~więc sensu powtarzać podstaw składni.  Dalsze rozdziały skupiają się głównie na ogólnych zasadach pisania pracy dyplomowej oraz typowych strukturach \LaTeX-a z tym związanych. Do~dyspozycji jest wspomniany projekt początkowy (z klasą dokumentu) oraz przykładami popularnych zastosowań, zasadniczo wystarczy więc przez analogię kopiować, modyfikować i~uzupełniać jego zawartość, aż~do~otrzymania ostatecznej pożądanej treści.
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \cleardoublepage
+% \chapter{Zalecenia edycyjne}
+% \label{cha:Zalecenia edycyjne}
+
+% Rozdział ten przedstawia różne aspekty edycji pracy dyplomowej: format, załączniki, strukturę, ogólne zalecenia pisarskie. częste błędy oraz jak korygować pracę.
+
+% \section{Format fizyczny pracy oraz załączniki}
+% \label{sec:Format fizyczny}
+
+% Pracę dyplomową należy \textbf{wydrukować dwustronnie} i~\textbf{oprawić w~ miękkie okładki}, więc klasa dokumentu ma~w~tym~celu zdefiniowane naprzemiennie $1cm$ przeznaczony na oprawę, stąd zawartości stron są na zmianę przesunięte do lewej i prawej, co jest zamierzone!. Rozdziały należy rozpoczynać na stronach ,,prawych'' (czyli nieparzystych numerach stron), a w tym celu poprzedzać je komendą \textbf{\textbackslash cleardoublepage}. Orientacyjny rozmiar pracy licencjackiej to minimalnie 40 stron (preferowane co najmniej 50). Orientacyjnie: praca magisterska powinna mieć minimalnie 50 stron (preferowane co najmniej 60). 
+
+% Do pracy dołączamy płytę \textit{CD / DVD / Blu-Ray} z~następującą zawartością (5 folderów):
+% \begin{enumerate}
+%   \item dokumentacja: praca dyplomowa w~wersji elektronicznej (plik pdf);
+%   \item postać wykonywalna aplikacji;
+%   \item kody źródłowe aplikacji;
+%   \item przykłady (np. pliki z~danymi, wyniki obliczeń).
+%   \item najlepiej też zawartość stron www, do~których odnosimy się w~referencjach, w~formie ''archiwum strony www'' (jeden plik z~rozszerzeniem .mht, zapisywany z~ poziomu przeglądarki www).
+% \end{enumerate}
+
+% \section{Struktura pracy}
+% \label{sec:Struktura pracy}
+
+% W pracy należy wyróżnić (nieformalnie; bo formalnie to~będą po prostu rozdziały) część teoretyczną i~praktyczną. W~części teoretycznej omawiamy zagadnienia związane z~tematem pracy (ujęte w~ramce pracy). W~części praktycznej prezentujemy koncepcje i~rozważania autora oraz jego prace (projektowe, teoretyczne, implementacyjne). Zwykle ostatnim rozdziałem części praktycznej jest ,,Podręcznik użytkownika'' z~wymaganiami sprzętowymi i~programistycznymi (sprzęt, SO, środowiska uruchomieniowe, serwery aplikacji i~baz danych), opisem instalacji systemu/aplikacji, wyliczeniem i~opisem zaimplementowanych funkcji oraz ze zrzutami ekranu ilustrującymi poszczególne funkcjonalności.
+
+% \begin{enumerate}
+%   \item Rozdziały nazywamy, co ukierunkowuje od razu treść rozdziału. Nazwa podrozdziału w~ideale powinna być \textbf{samowystarczalna} i~nie zależeć od kontekstu (np.~nie~nazywamy podrozdziału ,,Podział'' czy ,,Historia'', ale np.~,,Podział klasyfikatorów'', ,,Historia Internetu''). Tytuły (pod)rozdziałów nie~powinny być jednak bardzo długie (orientacyjnie: powinny mieścić się w jednej linii).
+
+%   \item W~spisie treści nie~pojawią się (zakładając brak modyfikacji proponowanej klasy dokumentu \textbf{iiuwb.cls}) więcej niż trzy poziomy struktury (licząc \textbf{$\backslash$chapter} jako pierwszy z~nich, czyli jeszcze \textbf{$\backslash$section} oraz \textbf{$\backslash$subsection}); w~samej treści pracy możemy używać też \textbf{$\backslash$subsubsection}, a~nawet sporadycznie \textbf{$\backslash$paragraph}.
+
+%   \item Tytułów (pod)rozdziałów nie~kończymy kropką.
+
+
+
+%   \item Nie~należy tworzyć zbyt długich ani zbyt krótkich akapitów (minimum trzy zdania). Tekst akapitu powinien być zwarty tematycznie, najlepiej by kolejny akapit nawiązywał do~poprzedniego i~stanowiły w~ten sposób logiczną całość wywodu.
+
+% \end{enumerate}
+
+% \subsection{Przykładowa subsection}
+
+% \textit{Subsection} \textbf{(sekcja - poziom 3)}  wygląda jak wyżej. Jak widać: jest numerowane trzema liczbami.
+
+% \subsubsection{Przykładowa subsubsection}
+
+% \textit{Subsubsection} \textbf{(sekcja - poziom 4)} wygląda jak wyżej. Można dodefiniować jego numerowanie, ale raczej nie~będzie to~czytelne (cztery liczby).
+
+% \paragraph{Przykładowy paragraph}
+
+% Z kolei \textit{paragraph} (najdrobniejsza domyślna sekcja - poziom 5) wygląda jak obok i~nie ma po nim domyślnego przeniesienia do~kolejnej linii (\textit{line feed}). Taki jest standard, acz może to budzić lekki niepokój.
+
+
+% \section{Ogólne zalecenia pisarskie}
+% \label{sec:Zalecenia ogolne}
+
+% \begin{enumerate}
+
+% \item Spacje wielokrotne           czy tabulacje        znaczą w \LaTeX-a tyle, co pojedyncza spacja. 
+
+% Jedna lub więcej pusta linia to zwykle zakończenie akapitu z przeniesieniem do nowego wiersza. Można też wymusić przeniesienie do nowego wiersza \\ podwójnym \textit{backslaszem}. 
+% Używać tego należy z umiarem, ale można sobie formatować kod dokumentu na różne wygodne sposoby, 
+% jak 
+% np. 
+% naprzemienne wcięcia akapitów bez szkody dla finalnego wyglądu itp.
+
+%   \item pojęcia i~słowa z~języka obcego wyróżniamy zwykle poprzez \textit{kursywę};
+  
+%   \item słowa kluczowe z~języka programowania, nazwy klas, metod, funkcji i~ zmiennych, czy też znaczniki HTML wyróżniamy zwykle przez \textbf{wytłuszczenie}, np.~\textbf{MyClass}, \textbf{<h2>};
+%   \item nazwy funkcji i~metod powinny mieć przy sobie nawias, aby łatwo dało się je zidentyfikować, np.~\textbf{RetrieveData()}, \textbf{toString()};
+%   \item nie~używamy do~wyróżniania KAPITALIKÓW (czyli tzw. CAPSÓW);
+%   \item nazwy kontrolek GUI, plików, tabel baz danych itp. programistycznych elementów (z wyjątkiem słów kluczowych, nazw klas, funkcji, metod i~zmiennych) wyróżniamy \textit{kursywą};
+%   \item nazwy własne (szczególnie z obcego języka) lub~skróty tych nazw proponuję pisać kursywą, jest to czytelniejsze, np.~\textit{Visual Studio, Java, SSN, ERP, CSS, AJAX}, etc.
+%   \item pierwsze wystąpienie ważnego terminu można zaakcentować wytłuszczając go;
+%   \item ewentualne cytaty (np.~przepisy prawne) proponuję umieszczać w~,,cudzysłowie'' i~ \textit{kursywą};
+%   \item ważne klasyfikacje podkreślamy \textbf{pogrubieniem}, ułatwia to~ czytelnikowi zrozumienie istoty podziału; podobnie postępujemy z~ wyliczanymi etapami procesu czy algorytmu;
+
+%   \item każdy rysunek powinien być czytelny (rozmiar czcionki legendy powinien być zbliżony do rozmiaru czcionki zwykłego tekstu, etykiety osi, jednostki, itp.), zapowiedziany i~skomentowany w~tekście; rysunek powinien być kontrastowy, na białym lub przynajmniej jasnym tle; najlepiej też używać rysunków w formatach wektorowych jak: wmf, ps, eps, svg, zwykle też pdf; rastrowe obrazy powinny być w odpowiedniej rozdzielczości/rozmiarze.
+  
+%    \item \LaTeX rzuca obrazkami jak Anita Włodarczyk młotem, więc odnosimy się do nich w kodzie wyłącznie bezpośrednio przez \textbackslash \textit{ref} do zdefiniowanej \textit{label}, np. ,,Rysunek \textbackslash ref\{fig:chords3\} przedstawia schemat...''. Odnośniki typu ''poniżej'', ''powyżej'' łatwo mogą zostać pozbawione sensu w trakcie dalszej edycji.
+   
+%   \item wykresy wklejane z~MS Excela powinny mieć sensowne zakresy i~osie (np.~zmienne procentowe powinny być prezentowane w~zakresie [0;100], a~nie np. [-10;120] jak to się Excelowi zdarza);
+  
+%   \item każdy rysunek, tabela czy listing kodu powinny być wspomniane i omówione w~tekście pracy;
+  
+%   \item   w~tabelach stosujemy sensowne formatowanie liczb, zależnie od kontekstu, np.~dwie, trzy cyfry po przecinku;
+%   \item \textbf{Twarda spacja} W~składaniu tekstu za błąd (tzw. sierotka) uważa się pozostawienie na końcu lub~na początku wiersza osamotnionego krókiego słowa lub~symbolu, zwłaszcza jednoliterowego. Zapobiega temu wstwianie tzw. twardych spacji w~miejsca, w~których nie~powinna być \textit{łamana} linia. Twardą spację wstawia się \textbf{zamiast} zwykłej spacji, aby podczas kompilacji \LaTeX~pozostawił połączone twardą spacją wyrazy w~tej samej linii. Aby wstawić twardą spację w~\LaTeX-u należy zamiast zwykłej spacji użyć symbolu tyldy '\textasciitilde' (tyldę w~Windows uzyskujemy naciskając równocześnie \textit{Shift} oraz klawisz tuż pod \textit{Escape}, a~następnie spację). Używamy twardej spacji z~ pewnością po jednoliterowych spójnikach i~przyimkach, symboli waluty, np.~\textit{w~domu, i~dalej, a~także, o~wszystkim, u~Stefana, z~zamkiem, 50~\$, Władysław~IV, 50~mAh}. Zaleca się również po wyrazach dwu- a~nawet i~trzyliterowych (po, od, do, za, nie, się). Twarda spacja ma stałą szerokość, równą nominalnej wielkości zwykłej spacji, stąd generowany odstęp może niekiedy wydawać~się niestety nieestetyczny.
+%     \item najczęściej stawiamy przecinek przed ,,jako'', ,,z czym'', ,,które'', ,,jakie'', ,,od których'', ,,od jakich'', ,,tak więc'',
+% ,,na co'', ,,ale'';
+
+% \item nie~stawia się spacji przed znakiem przestankowym: znaki interpunkcyjne (kropkę, przecinek, średnik, wykrzyknik, znak zapytania itp.) stawia się zawsze bezpośrednio po wyrazie;
+%   \item przed ,,('' stawiamy spację, po - nie; dla ,,)'' odwrotnie;
+%   \item rozróżniamy łączniki ,,-'' oraz półpauzy ,, -- '' i~pauzy ,, --- '':
+
+%   \textit{Myślniki, to~według powszechnej opinii poziome kreski w~tekście. W~ rzeczywistości myślnik to~pauza lub~półpauza. Krótka pozioma kreska, to~ dywiz. W~zwykłych programach edycyjnych dywiz traktowany jest równorzędnie ze znakiem minus. Dywiz nie~jest oddzielany żadnymi odstępami od tekstu, stanowiąc z~nim jedną całość. Zapisujemy zatem: hokus-pokus, XV-lecie, Konstancin-Jeziorna albo ani mru-mru lub~bara-bara. Pauza i~częściej stosowana półpauza, to~kreska oddzielona z~obu stron odstępami i~stosowana np.~między liczbami podającymi wartość przybliżoną np.~,,... co stanowi 56 –- 60\% populacji''. Pauzy (półpauzy) używamy również w~dialogach literackich na początku wiersza, we wtrąceniach, w~wyliczeniach wersowych, między wyrazami przeciwstawnymi np.~w~wyrażeniu ,,góra –- dół to~przeciwne krańce''. }
+%   \footnote{ Za: \url{http://yestok.pl/gen/y07.php}}
+
+% W akapicie powyżej mamy też przykład przypisu dolnego (\textbf{\textbackslash footnote}).
+
+%   Zwykle w~\LaTeX-u używamy półpauzy (dwa minusy otoczone spacjami) lub~łącznika (jeden minus nie otaczany spacjami);
+
+%   \item wypunktowania rozpoczynane wielką literą (,,wielozdaniowe'') kończymy zawsze kropką;
+%   \item wypunktowania rozpoczynane małą literą (jednozdaniowe lub~równoważniki zdań) kończymy średnikiem lub~przecinkiem (wszystkie jednakowo), dopiero ostatnie (jak te właśnie) kończymy kropką.
+
+% \end{enumerate}
+
+% \section{Częste błędy gramatyczne}
+% \label{sec:Czeste bledy gramatyczne}
+% \begin{description}
+%   \item[przy pomocy kogoś] -- ,,mając kogoś za pomocnika, korzystając z~ czyichś usług, poparcia, pomocy'';
+%   \item[za pomocą czegoś]  -- ,,posługując się czymś, używając czegoś'';
+%   \item[własność]  -- ,,to, co ktoś posiada; rzecz własna, mienie, majątek'';
+%   \item[właściwość]  -- częściej w~liczbie mnogiej ,,to, co jest charakterystyczne dla danej osoby lub~rzeczy; cecha'';
+%   \item[porównujemy coś z~czymś,] a~nie coś do~czegoś;
+%   \item [„dzień dzisiejszy”] -- pleonazm. 
+% \end{description}
+
+% \section{Częste błędy ortograficzne}
+% \label{sec:Czeste bledy ortograficzne}
+% \begin{itemize}
+% \item ,,\sout{napewno}'', 
+% \item ,,\sout{wogóle/wogule}'', 
+% \item ,,\sout{na prawdę}'', 
+% \item ,,\sout{narazie}'', 
+% \item ,,\sout{po za tym/pozatym}'', 
+% \item ,,\sout{na codzień}'', 
+% \item ,,\sout{nacodzień}'', 
+% \item ,,\sout{orginlany}'', 
+% \item ,,\sout{muj}'', 
+% \item ,,\sout{wziąść}'', 
+% \item ,,\sout{conajmniej}'', 
+% \item ,,\sout{niewiem}'', 
+% \item ,\sout{,z przed/sprzed}'', 
+% \item ,,\sout{jusz}'', 
+% \item ,,\sout{złodzieji}''.
+% \end{itemize}
+
+% Przekreślenie uzyskane z pomocą pakietu ulem oraz komendy \textbackslash \textbf{sout{}}.
+
+
+% \section{Korekta}
+% W końcowej fazie edycji konieczna jest dokładna korekta całości pracy pod kątem ,,literówek'' (szczególnie wyrazów poprawnych słownikowo lecz nie gramatycznie, których nie~wykryje sprawdzanie słownikowe),
+% zapomnianych ogonków, ,,zjedzonych'' lub~zdublowanych wyrazów, oraz gramatyki i~ interpunkcji (zasady: \url{http://so.pwn.pl/zasady.php?id=629734}). Błędy ortograficzne (test błędów: gżegżółka, grzegżółka, gżegżułka, grzegrzuka) powinny być podkreślane w kodzie na czerwono przez słownik \textit{Overleafa}, niestety tylko z wybranego języka. 
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \cleardoublepage
+% \chapter{Przykłady typowego formatowania dokumentu w~\LaTeX-u}
+% \label{cha:Przyklady}
+
+% Niniejszy rozdział zawiera przykłady typowego formatowania dokumentu \LaTeX-a.
+
+%  \section{Wypunktowania}
+%  \label{sec:Wypunktowania}
+
+% Przykład wypunktowania:
+% \begin{itemize}
+% \item Przed ukośnikiem umieszczamy te ilości komórek w~sąsiedztwie, które są~ wymagane do~przeżycia (dla reguły Conwaya będzie to~23)
+% \item Następnie umieszczamy ukośnik: ,,/'' (ASCII 47)
+% \item Po ukośniku umieszczamy te ilości komórek w~sąsiedztwie, dla których powstaną żywe komórki na martwych polach (dla reguły Conwaya będzie to~3)
+% \end{itemize}
+
+% Przykład wypunktowania numerowanego:
+% \begin{enumerate}
+% \item Przed ukośnikiem umieszczamy te ilości komórek w~sąsiedztwie, które są~ wymagane do~przeżycia (dla reguły Conwaya będzie to~23)
+% \item Następnie umieszczamy ukośnik: ,,/'' (ASCII 47)
+% \item Po ukośniku umieszczamy te ilości komórek w~sąsiedztwie, dla których powstaną żywe komórki na martwych polach (dla reguły Conwaya będzie to~3)
+% \end{enumerate}
+
+% Przykład wypunktowania deskryptywnego (z opisem w~nowej linii):
+% \begin{description}
+%   \item[Klasa 1] \hfill \\
+%   Prawie wszystkie początkowe wzorce, szybko ewoluują do~stałych i~ niezmiennych modeli, w~których wszystkie losowości zanikają.
+%   \item[Klasa 2] \hfill \\
+%   Prawie wszystkie początkowe wzorce ewoluują do~stałych lub~oscylujących struktur. Część losowości pozostaje, a~lokalne zmiany w~początkowym wzorcu pozostają lokalne.
+%   \item[Klasa 3] \hfill \\
+%   Prawie wszystkie początkowe wzorce ewoluują w~pseudo-losowy, chaotyczny sposób. Większość struktur zostaje szybko niszczona przez wszechobecny chaos, a~lokalne zmiany w~początkowym wzorcu mają tendencje to~ rozprzestrzeniania się w~nieskończoność.
+%   \item[Klasa 4] \hfill \\
+%   Prawie wszystkie początkowe wzorce ewoluują w~kompleksowe struktury, mogące ze sobą oddziaływać w~skomplikowany i~interesujący sposób. Niekiedy po przejściu dużej ilości pokoleń wynikiem może być klasa 2, z~strukturami oscylacyjnymi. Wolfram\footnote{Cellular Automata (1983) Stephen Wolfram} przypuszcza, że wiele -- o~ile nie~wszystkie -- automaty komórkowe klasy czwartej są~zdolne do~obliczeń. Zostało to~udowodnione dla reguły 110 i~ reguł Conweya.
+% \end{description}
+
+%  \section{Rysunki w pracy}
+%  \label{sec:Add figures}
+
+%   Rysunki zasadniczo centrujemy na stronie i musimy uważać by nie wychodziły poza standardowe marginesy. Rozmiar rysunku ustalamy parametrem komendy \textbf{\textbackslash includegraphics}.
+  
+%   \textit{Overleaf} akceptuje wiele popularnych formatów graficznych zarówno wektorowych jak i rastrowych bez  większych problemów. Najprostszą metodą jest skopiowanie całości kodu przykładowego rysunku (od \textbf{\textbackslash begin\{figure\} } do \textbf{\textbackslash end\{figure\} }) 
+  
+%   Poniżej przykład rysunku wektorowego (\textit{eps})  - w~\textit{WinEdt} możliwe jest i~\textit{TeXify} (do~\textit{DVI}, później dopiero do~ \textit{PDF}) oraz~\textit{PDFTeXify} (bezpośrednio do~\textit{PDF}), preferowane \textit{TeXify} ponieważ \textit{DVI} jest szybsze, w~razie pozostawienia otwartego pliku \textit{DVI} ,,uaktualnia'' plik pokazując te same miejsce dokumentu, co~jest bardzo wygodne. Ideałem jest utworzenie obrazu wektorowego i~ zapisanie go~jako \textit{eps} lub~\textit{ps}. Jeżeli mamy schemat wyrysowany kształtami w Wordzie czy innym programie, prawdopodobnie możemy użyć (\textit{BullZip PDF Printer -> Save as EPS}) do zapisania go jako eps. Obrazy rastrowe bez źródeł można konwertować do~wektorowych np.~drukując darmową wirtualną drukarką (\textit{BullZip PDF Printer -> Save as EPS}) lub~za pomocą programów graficznych, niestety zwykle ze~zniekształceniami. 
+  
+%   W ideale warto używać grafiki wektorowej do schematów, ale na pewno nie do zdjęć czy zrzutów ekranu. Te włączamy do dokumentu rastrowo, najlepiej jako png czy bmp (jpg mogą mieć niekiedy nieprzyjemne zniekształcenia). 
+  
+% Na rysunku \ref{fig: Podklasy funkcji harmonicznych} pokazano przykładowy rysunek wektorowy (utworzony w~\textit{Corel Draw} i~zapisany bezpośrednio jako \textit{.eps}). Nawet przy dużym zbliżeniu zachowuje idealne kształty i kolory.
+
+% \begin{figure}[!h]
+% \centering
+% \includegraphics[width=12cm]{chords3.eps}
+% \caption{Podklasy funkcji harmonicznych}
+% \label{fig: Podklasy funkcji harmonicznych}
+% \end{figure}
+
+% Rysunek \ref{fig: Przykladowe oscylatory} prezentuje dołączony plik rastrowy z kompresją jpeg (rastrowe są~m.in. \textit{jpg, png, bmp}). Niekiedy mogą powstać zniekształcenia wynikające ze~skalowania lub kompresji, zalecany format to~.png, bo~jest kompresowany bezstratnie. Przy dużym zbliżeniu tego rysunku widoczne są niewielkie zniekształcenia i kształtów i kolorów. 
+
+% Uwaga: kiedy dołączamy rastrowe obrazy, w~\textit{WinEdt} wersji 7.1 niemożliwa była opcja \textit{TeXify} (do \textit{PS}), trzeba było używać \textit{PDFTeXify} (kompilacja bezpośrednio do~\textit{PDF}). Aktualna wersja programu może zachowywać się odmiennie.
+
+% \begin{figure}[!h]
+% \centering
+% \includegraphics[width=1\textwidth]{Show02b.jpg}
+% \caption{Przykładowe oscylatory o~okresie 2, 3 oraz 15}
+% \label{fig: Przykladowe oscylatory}
+% \end{figure}
+
+%  \section{Przykład tabeli}
+%  \label{sec:Przyklad tabeli}
+
+% Tabela \ref{tab:NoteImportance} prezentuje ustalanie \textit{Note Importance}.
+
+% \begin{table}[!h]
+% \caption{Determining Note Importance}
+% \begin{center}
+% \begin{tabular}{| c |  c |}
+% \hline
+% $\log_{2} \frac{Note Length}{Harmonic Fragment Length}$  & Initial value\\
+% \hline
+% \hline
+% 2 & 46 \\ \hline
+% 1 & 1.4 \\ 
+% 0 & 1.2 \\ \hline
+% -1 & 1.0 \\ \hline
+% -2 & 0.8 \\ \hline
+% -3 & 0.7 \\ \hline
+% -4 & 0.5 \\ \hline
+% -5 & 0.3 \\
+% \hline
+% \end{tabular}
+% \label{tab:NoteImportance}
+% \end{center}
+% \end{table}
+
+% Proste tabele tworzymy ręcznie, bardziej skomplikowanie (łączenie kolumn, wierszy itp.) można wygenerować używając generatora kodu tabel \LaTeX-a: \url{https://www.tablesgenerator.com/} albo plugina do~Excela, który generuje z~ selekcji kod \LaTeX-a tablicy: \url{http://www.ctan.org/tex-archive/support/excel2latex/}, opisany w~ \url{http://blog.modelworks.ch/?p=153}. W przypadki skomplikowanych tabel z dużą ilością tekstu w komórkach dla dobrych efektow trzeba się posiłkować pakietami \LaTeX-a do obsługi tabel, jak np. \textit{tabularx}.
+
+
+%   \section{Przykład formuły matematycznej}
+%  \label{sec:Przyklad formuly}
+
+%  Analogicznie możemy użyć \textbf{t-norm} i~\textbf{t-conorm} zamiast operacji \textbf{max} i~\textbf{min}, jak~w~równaniu \ref{eq:s-t}. 
+
+% \begin{equation}[h]
+%   \mu(d)=\sum_{x\in X}t(\mu_{R}(x),\mu_{P}(x))
+%   \label{eq:s-t}
+% \end{equation}
+
+
+%  \section{Przykład z~kodem programu}
+%  \label{sec:Przyklad kodu}
+
+% Poniżej kod programu z~zachowanym formatowaniem oraz wcięciami z użyciem tabulacji czy spacji wielokrotnych (czcionka pomniejszona):
+
+% \small
+%  \begin{verbatim}
+% class MAP_PUZZLE {
+%   public:
+%     int state;
+%     bool alive;
+%     int n,v[10];
+%     void inline clear();
+%     void inline import(int a);
+%     void inline importnear(int a);
+%     void inline die();
+%     void inline dienear(int a);
+%     void set(volatile int & n,volatile int & s,
+% 	             volatile int *& v,volatile bool & alive);
+%     MAP_PUZZLE();
+% };
+%  \end{verbatim}
+% \normalsize         %przywrócenie normalnego rozmiaru czcionki
+
+% Jest to środowisko \textbf{\textbackslash verbatim} zbliżone do standardowego tekstu, gdzie dozwolone jest łamanie strony. Jeżeli chcemy uzyskać listingi autonumerowane z numeracją wierszy i okalającym prostokątem można użyć np. pakietu \textbf{listing}: \url{https://www.overleaf.com/learn/latex/Code_listing#Captions_and_the_list_of_Listings}
+
+
+%  \section{Referowanie do~literatury}
+%  \label{sec:Referowanie do literatury}
+
+%  Zalecenia:
+% \begin{enumerate}
+%   \item literatura powinna zawierać minimalnie 8 poważnych pozycji, preferowane co~najmniej 15;
+%   \item tekst pracy powinien co~najmniej raz odwoływać się do~każdej pozycji bibliografii, a~jeżeli jest to~sensowne to~wielokrotnie;
+%   \item referencje do~stron www powinny być wysoce wiarygodne;
+%   \item Wikipedii (i podobnych źródeł o~niepewnej reputacji i~zmiennej treści) raczej nie~podajemy jako bibliografii, proszę szukać poważniejszych źródeł (dla~definicji co~najmniej Słownik PWN).
+%   \item preferowane są źródła książkowe, za wyjątkiem języków programowania, pakietów czy technik, które niekiedy bardzo szybko się rozwijają.
+% \end{enumerate}
+
+%  Przykład odwołań do~literatury:
+%  ,,Zagadnienie te zostało opisane w~\cite{Arabnia}, szerzej w~\cite{cswww}, bardzo szczegółowo w~następujących trzech pracach \cite{delac, Gomathi, hess}, wreszcie podsumowane w~\cite{Youssif}.'' Przykładowe referencje zdefiniowane w tu w biblio.bib to różne formy publikacji źródeł (artykuły naukowe, książki itp.), a w szczególności przykładowy link do strony internetowej zdefiniowany jest jako \textbf{@MISC}.
+
+%  \section{Linki wewnętrzne i~zewnętrzne}
+%  %\label{sec:Linki}
+
+% Pakiet \textit{hyperref} automatycznie generuje linki w~obrębie dokumentu do~ wszelkiej zawartości ,,referowalnej'', typu sekcje, rysunki, tabele, wzory referencje do bibliografii. Można też prosto definiować linki zewnętrzne za pomocą komendy \verb"\url{...}", które będą ,,klikalne'' w docelowym dokumencie \textit{pdf}. Dokumentacja pakietu: \url{http://en.wikibooks.org/wiki/LaTeX/Hyperlinks}.
+
+
+\chapter{Projekt i implementacja gry komputerowej Pac-Man}
+
+
+\section{Wymagania projektowe}
+\subsection{Scenariusz/-e gry}
+Przedstawiona gra jest webową, uproszczoną reprezentacją klasycznego Pac-Mana z kilkoma różnicami tj. zmniejszenie ilości przeciwników(duchów) z 4 do 1, zmniejszenie wielkości planszy labiryntu z 28 x 31 do 19 x 19,  dzięki którym szkolenie jest szybsze a poprzez zmniejszenie przestrzeni stanów środowiska skutkuje ułatwieniem nauki optymalnej strategii.\\
+Użytkownik steruje żółtą postacią Pac-Mana a jego zadaniem jest zebranie wszystkich punktów z planszy przy jednoczesnym unikaniu czerwonego duszka sterowanego przez agenta. Na ocenę wyniku końcowego wpływa liczba zebranych punktów i czas, którego gracz potrzebował na przejście poziomu. Celem duszka jest jak najszybsze schwytanie Pac-Mana.\\
+Planszę labiryntu wypełniają dwa rodzaje punktów, które Pac-Man może zbierać: białe kropki, których wartość wynosi 10 punktów oraz żółte punkty specjalne o wartości 50 punktów, które po zebraniu dają graczowi możliwość zjedzenia duszka przez 50 kroków gry czyli ok. 7,5 sek. Po zjedzeniu duszka wraca on na środek planszy(punkt startowy) by znów utrudniać graczowi zbieranie punktów. Zjedzenie duszka skutkuje przyznaniem kolejnych 50 punktów na konto gracza.
+Warunkami zakończenia gry są: zebranie wszystkich punktów rozmieszczonych na planszy lub schwytanie Pac-Mana przez duszka.//
+
+\subsection{Opis użytkowników (i opcjonalnie przypadki użycia)}
+\subsection{Wymagania funkcjonalne}
+\subsection{Wymagania niefunkcjonalne}
+
+\section{Projekt i implementacja algorytmu XXXX}
+\subsection{Specyfikacja/opis zadania }
+Co model będzie przewidywał? Na podstawie czego?
+\subsection{Architektura modelu}
+schemat lub opis w punktach
+\subsection{Uczenie modelu i walidacja}
+schemat uczenia modelu i metody walidacji jego skuteczności przewidywania
+\subsection{Optymalizacja działania modelu i wybór modelu do wdrożenia}
+\section{Projekt i implementacja aplikacji webowej}
+\subsection{Architektura systemu / Moduły aplikacji}
+\subsection{Implementacja warstwy frontendowej}
+\subsection{Implementacja warstwy backendowej}
+\subsection{Integracja modelu z backendem / wdrożenie modelu w aplikacji}
+\subsection{Interfejs użytkownika i przypadki użycia}
+\section{Testy}
+\subsection{Testy funkcjonalne}
+\subsection{Testy poprawności działania modelu}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter*{Podsumowanie}
+\label{cha:Podsumowanie}
+\addcontentsline{toc}{chapter}{Podsumowanie}
+
+Podsumowanie ma treści zbliżone do~\textbf{Wstępu}, dodatkowo powinno się oceniać wykonaną pracę (spełnienie założeń i~osiągnięcie celu pracy, ewentualnie co się nie udało zrealizować i dlaczego). W~miarę możliwości wypada też przedstawić możliwe zastosowania pracy oraz perspektywy rozwoju (aplikacji/algorytmu, ale też i~tematyki z~tym związanej).
+
+Roboczo można sporządzić 5 oddzielnych akapitów z~tytułami (do późniejszego usunięcia) jak następuje:
+\begin{enumerate}
+  \item Motywacja i~kontekst
+        \vspace{-10pt}
+  \item Zakres pracy, przeprowadzone czynności (jasno wyszczególniony wkład własny)
+        \vspace{-10pt}
+  \item Osiągnięte wyniki, interpretacja wyników, wnioski, etc.
+        \vspace{-10pt}
+  \item Ocena spełnienia założeń i~osiągnięcia celu pracy
+        \vspace{-10pt}
+  \item Perspektywy rozwoju
+\end{enumerate}
+
+Docelowo akapitów może być oczywiście więcej.
+W podsumowaniu pracy również używamy numerów rozdziałów (,,rozdział \ref{cha:Przyklady}'', sekcja \ref{sec:Format fizyczny}, ,,we~wstępie pracy'', etc.) zamiast relatywnych określeń ,,następny'', ,,kolejny'' czy ,,ostatni''.
+
+I to tyle. ,,Koniec i bomba, a kto czytał ten trąba.''\footnote{Witold Gombrowicz, \textit{Ferdydurke}} Powodzenia!
+
+% dołączenie bibliografii z~pliku biblio.bib (tylko pozycje odwołane w~tekście, zgodnie z~formatowaniem ,,unsrt'' - numerowane kolejnością wystąpienia)
+
+\newpage
+\textbf{\large{Wykorzystanie sztucznej inteligencji w pracy dyplomowej}}
+\\
+W niniejszej pracy dyplomowej wykorzystano narzędzie oparte na sztucznej inteligencji, tj. ChatGPT, DeepSeek, Google tłumacz od Google. W/w narzędzia wykorzystane do:
+\begin{itemize}
+    \item tłumaczenia zdań z języka polskiego na angielski i z angielskiego na polski;
+    \item wspomagania redakcji językowej tekstu, m.i. korekty stylistycznej, gramatycznej i interpunkcyjnej;
+    \item generowanie schematów: rysunek \ref{fig:Scheme model}.
+\end{itemize}
+
+
+\cleardoublepage
+\addcontentsline{toc}{chapter}{Bibliografia}
+\bibliography{biblio}
+\bibliographystyle{unsrt}
+
+%Spis rysunków
+%\newpage
+\listoffigures
+
+%Spis tabel
+%\newpage
+\listoftables
+
+\end{document}

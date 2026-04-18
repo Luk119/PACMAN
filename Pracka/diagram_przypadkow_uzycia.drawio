@@ -1,0 +1,96 @@
+<mxfile>
+  <diagram name="Przypadki użycia">
+    <mxGraphModel dx="1200" dy="800" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Ramka systemu -->
+        <mxCell id="2" value="Pac-Man DQN" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.flowchart.start_2;fillColor=none;strokeColor=#333333;fontSize=14;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="40" width="1000" height="620" as="geometry" />
+        </mxCell>
+
+        <!-- Aktor -->
+        <mxCell id="3" value="Użytkownik" style="shape=mxgraph.uml.actor;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="540" y="280" width="60" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- PU1 Rozegranie partii -->
+        <mxCell id="4" value="Rozegranie partii" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="200" y="180" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- PU2 Trening agenta DQN -->
+        <mxCell id="5" value="Trening agenta DQN" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="200" y="440" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- PU3 Wybór poziomu trudności -->
+        <mxCell id="6" value="Wybór poziomu trudności" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="760" y="290" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- PU4 Wpisanie wyniku -->
+        <mxCell id="7" value="Wpisanie wyniku do tablicy wyników" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="120" y="60" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- PU5 Uczenie online -->
+        <mxCell id="8" value="Włączenie uczenia online podczas gry" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="380" y="60" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- PU6 Obserwacja metryk -->
+        <mxCell id="9" value="Obserwacja metryk uczenia na żywo" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="120" y="540" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- PU7 Zatrzymanie treningu -->
+        <mxCell id="10" value="Zatrzymanie treningu" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="380" y="540" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Strzałki: Użytkownik -> PU1 -->
+        <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="3" target="4" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Strzałki: Użytkownik -> PU2 -->
+        <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="3" target="5" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PU1 -> PU3 include -->
+        <mxCell id="13" value="&lt;&lt;include&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="4" target="6" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PU2 -> PU3 include -->
+        <mxCell id="14" value="&lt;&lt;include&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="5" target="6" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PU4 -> PU1 extend -->
+        <mxCell id="15" value="&lt;&lt;extend&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="7" target="4" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PU5 -> PU1 extend -->
+        <mxCell id="16" value="&lt;&lt;extend&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="8" target="4" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PU6 -> PU2 extend -->
+        <mxCell id="17" value="&lt;&lt;extend&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="9" target="5" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PU7 -> PU2 extend -->
+        <mxCell id="18" value="&lt;&lt;extend&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="10" target="5" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

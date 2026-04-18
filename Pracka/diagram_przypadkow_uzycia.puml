@@ -1,0 +1,42 @@
+@startuml
+
+left to right direction
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #FAFAFA
+    BorderColor #333333
+    ArrowColor #333333
+}
+
+rectangle "Pac-Man DQN" {
+
+    usecase "Rozegranie partii" as PU1
+    usecase "Trening agenta DQN" as PU2
+    usecase "Wybór poziomu trudności" as PU3
+    usecase "Wpisanie wyniku\ndo tablicy wyników" as PU4
+    usecase "Włączenie uczenia\nonline podczas gry" as PU5
+    usecase "Obserwacja metryk\nuczenia na żywo" as PU6
+    usecase "Zatrzymanie treningu" as PU7
+
+    actor "Użytkownik" as user
+
+    PU1 -[hidden]- user
+    user -[hidden]- PU2
+    PU4 -[hidden]- PU5
+    PU6 -[hidden]- PU7
+
+}
+
+user --> PU1
+user --> PU2
+
+PU1 ..> PU3 : <<include>>
+PU2 ..> PU3 : <<include>>
+
+PU4 ..> PU1 : <<extend>>
+PU5 ..> PU1 : <<extend>>
+
+PU6 ..> PU2 : <<extend>>
+PU7 ..> PU2 : <<extend>>
+
+@enduml
