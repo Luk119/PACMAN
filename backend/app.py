@@ -442,6 +442,11 @@ def select_model():
     new_path = os.path.join(_MODELS_DIR, MODEL_SLOTS[slot]["file"])
     loaded = agent.load(new_path)
 
+    # Zaktualizuj profil nagród w środowisku gry (uczenie online)
+    from environment import REWARD_PROFILES
+    with game_lock:
+        game_env._rewards = REWARD_PROFILES[MODEL_SLOTS[slot]["reward_profile"]]
+
     return jsonify({
         "slot":       slot,
         "name":       MODEL_SLOTS[slot]["name"],
