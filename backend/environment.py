@@ -137,6 +137,41 @@ MAZES = {
 }
 
 # ---------------------------------------------------------------------------
+# PROFILE NAGRÓD (3 różne systemy kar i nagród)
+# ---------------------------------------------------------------------------
+REWARD_PROFILES = {
+    1: {
+        # Agresywny – wysoka nagroda za złapanie, duża kara za każdy krok
+        # Efekt: duszek goni Pac-Mana bez wahania, ryzykuje ściany
+        "catch_reward":       500.0,
+        "direction_mult":      8.0,
+        "step_penalty":       -1.0,
+        "ghost_eaten":       -20.0,
+        "timeout_penalty":  -100.0,
+        "pacman_won":       -100.0,
+    },
+    2: {
+        # Standardowy – zbalansowane wartości (domyślny)
+        "catch_reward":       500.0,
+        "direction_mult":      5.0,
+        "step_penalty":       -0.5,
+        "ghost_eaten":       -20.0,
+        "timeout_penalty":   -50.0,
+        "pacman_won":        -50.0,
+    },
+    3: {
+        # Cierpliwy – mała kara za krok, duża kara za bycie zjedzonym
+        # Efekt: duszek jest ostrożny, unika power pelletów
+        "catch_reward":       300.0,
+        "direction_mult":      3.0,
+        "step_penalty":       -0.1,
+        "ghost_eaten":      -100.0,
+        "timeout_penalty":   -30.0,
+        "pacman_won":        -30.0,
+    },
+}
+
+# ---------------------------------------------------------------------------
 # POZYCJE STARTOWE
 # ---------------------------------------------------------------------------
 PACMAN_START = (14, 9)   # (row, col) – środek dołu labiryntu
@@ -161,7 +196,7 @@ class PacmanEnvironment:
     - generowanie akcji autopilota dla Pac-Mana w trybie treningu.
     """
 
-    def __init__(self, level: int = 1, training_mode: bool = False):
+    def __init__(self, level: int = 1, training_mode: bool = False, reward_profile: int = 1):
         """
         Args:
             level:         Numer poziomu labiryntu (1, 2 lub 3).
@@ -171,6 +206,7 @@ class PacmanEnvironment:
         self.level = level
         self.training_mode = training_mode
         self.maze_template = MAZES[level]
+        self._rewards = REWARD_PROFILES.get(reward_profile, REWARD_PROFILES[1])
 
         # Stan gry – inicjalizowany przez reset()
         self.maze: list[list[int]] = []
@@ -308,7 +344,7 @@ class PacmanEnvironment:
         if self._check_collision(ghost_prev_r, ghost_prev_c, pacman_prev_r, pacman_prev_c):
             if self.power_mode:
                 # Pac-Man zjada duszka → kara, ale nie na tyle duża żeby uciekać od gracza
-                reward += -20.0
+                reward += self._rewards["ghost_eaten"]
                 self.score += 200
                 info["ghost_eaten"] = True
                 # Zresetuj pozycję duszka do domu
@@ -317,7 +353,7 @@ class PacmanEnvironment:
                 self.power_mode = False
             else:
                 # Duszek złapał Pac-Mana → dominująca nagroda
-                reward += 500.0
+                reward += self._rewards["catch_reward"]
                 info["caught_pacman"] = True
                 self.done = True
                 info["reason"] = "ghost_caught_pacman"
@@ -337,12 +373,12 @@ class PacmanEnvironment:
 
         ghost_delta = dist_ghost_before - dist_now   # >0 = duszek zbliżył się
 
-        reward += ghost_delta * 5.0   # jedyny sygnał kierunkowy
+        reward += ghost_delta * self._rewards["direction_mult"]   # jedyny sygnał kierunkowy
 
         self.prev_manhattan = dist_now
 
         # Stała kara za krok — bez ruchu = zawsze ujemny wynik
-        reward += -0.5
+        reward += self._rewards["step_penalty"]
 
         # --- 6. WARUNEK KOŃCA EPIZODU --------------------------------------
         self.step_count += 1
@@ -350,14 +386,14 @@ class PacmanEnvironment:
         # Przekroczenie limitu kroków — kara za niezłapanie
         if self.step_count >= MAX_STEPS_PER_EPISODE:
             self.done = True
-            reward += -50.0
+            reward += self._rewards["timeout_penalty"]
             info["reason"] = "max_steps_reached"
 
         # Wszystkie kropki zjedzone (Pac-Man wygrał poziom)
         if self._all_dots_eaten():
             self.done = True
             self.game_won = True
-            reward += -50.0   # Pac-Man wygrał → dodatkowa kara dla duszka
+            reward += self._rewards["pacman_won"]   # Pac-Man wygrał → dodatkowa kara dla duszka
             info["reason"] = "pacman_won"
 
         return self.get_state(), reward, self.done, info

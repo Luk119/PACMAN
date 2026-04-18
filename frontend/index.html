@@ -109,6 +109,16 @@
       </div>
       <div class="panel-body">
 
+        <!-- Wybór modelu -->
+        <div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Model agenta</div>
+        <div class="level-selector" id="playModelSelector">
+          <button class="level-btn active" id="playModelBtn1" onclick="onPlayModelSelect(1)" title="Wysoka nagroda za złapanie, duża kara za krok">A – Agresywny</button>
+          <button class="level-btn"        id="playModelBtn2" onclick="onPlayModelSelect(2)" title="Zbalansowane nagrody">B – Standardowy</button>
+          <button class="level-btn"        id="playModelBtn3" onclick="onPlayModelSelect(3)" title="Mała kara za krok, duża kara za zjedzenie">C – Cierpliwy</button>
+        </div>
+
+        <hr class="section-sep" />
+
         <!-- Poziomy -->
         <div>
           <div class="level-selector">
@@ -216,6 +226,16 @@
           <div id="liveWatchStatus"
                style="font-size:0.68rem;color:var(--text-dim);font-family:'Courier New',monospace;">
           </div>
+        </div>
+
+        <hr class="section-sep" />
+
+        <!-- Wybór modelu do treningu -->
+        <div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Model do treningu</div>
+        <div class="level-selector" id="trainModelSelector">
+          <button class="train-lvl-btn active" id="trainModelBtn1" onclick="onTrainModelSelect(1)" title="Agresywny: +500 złapanie, krok -1.0">A – Agresywny</button>
+          <button class="train-lvl-btn"        id="trainModelBtn2" onclick="onTrainModelSelect(2)" title="Standardowy: +500 złapanie, krok -0.5">B – Standardowy</button>
+          <button class="train-lvl-btn"        id="trainModelBtn3" onclick="onTrainModelSelect(3)" title="Cierpliwy: +300 złapanie, krok -0.1">C – Cierpliwy</button>
         </div>
 
         <hr class="section-sep" />

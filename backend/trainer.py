@@ -58,6 +58,7 @@ class Trainer:
         log_interval:      int = 10,
         model_path:        str = "models/ghost_dqn.pth",
         level:             int = 1,
+        reward_profile:    int = 1,
     ):
         """
         Args:
@@ -74,6 +75,7 @@ class Trainer:
         self.log_interval     = log_interval
         self.model_path       = model_path
         self.level            = level
+        self.reward_profile   = reward_profile
 
         # --- STAN TRENINGU ---------------------------------------------------
         self.is_training    = False
@@ -158,7 +160,7 @@ class Trainer:
               f" | device={self.agent.device}")
 
         # Nowe środowisko dla wątku treningowego (bez power mode — ghost uczy się gonować)
-        env = PacmanEnvironment(level=self.level, training_mode=True)
+        env = PacmanEnvironment(level=self.level, training_mode=True, reward_profile=self.reward_profile)
 
         for ep in range(1, episodes + 1):
             # Sprawdzenie sygnału zatrzymania

@@ -74,6 +74,8 @@ const App = {
   countdownTotalStart: null,      // czas startu całego odliczania (do animacji tła)
   _trainLevel:        1,          // wybrany poziom w panelu treningu
   _trainEpisodes:     1000,       // wybrana liczba epizodów treningu
+  _playModelSlot:     1,          // wybrany model w panelu gry (1=A, 2=B, 3=C)
+  _trainModelSlot:    1,          // wybrany model w panelu treningu
   _highscore:         0,          // globalny najlepszy wynik
   flashAlpha:       0,            // czerwony flash gdy duszek złapie Pac-Mana
   waitingForStart:  false,        // true gdy czekamy na naciśnięcie P (INSERT COIN)
@@ -1066,9 +1068,33 @@ function appendTrainLogs(logs) {
 // ---------------------------------------------------------------------------
 // OBSŁUGA PRZYCISKÓW UI
 // ---------------------------------------------------------------------------
+async function onPlayModelSelect(slot) {
+  App._playModelSlot = slot;
+  [1, 2, 3].forEach(s => {
+    const btn = document.getElementById(`playModelBtn${s}`);
+    if (btn) btn.classList.toggle("active", s === slot);
+  });
+  try {
+    const data = await apiPost("/select_model", { slot });
+    const name = data.name ?? `Model ${slot}`;
+    setStatus(`Model ${name} wczytany.`);
+  } catch (e) {
+    setStatus("❌ Błąd zmiany modelu: " + e.message);
+  }
+}
+
+function onTrainModelSelect(slot) {
+  App._trainModelSlot = slot;
+  [1, 2, 3].forEach(s => {
+    const btn = document.getElementById(`trainModelBtn${s}`);
+    if (btn) btn.classList.toggle("active", s === slot);
+  });
+}
+
 async function onStartTraining() {
-  const episodes = App._trainEpisodes ?? 1000;
-  const level    = App._trainLevel ?? 1;
+  const episodes   = App._trainEpisodes ?? 1000;
+  const level      = App._trainLevel ?? 1;
+  const model_slot = App._trainModelSlot ?? 1;
 
   if (isNaN(episodes) || episodes < 1) {
     setStatus("Podaj prawidłową liczbę epizodów.");
@@ -1081,7 +1107,7 @@ async function onStartTraining() {
 
   try {
     setStatus("");
-    const data = await apiPost("/train", { episodes, level });
+    const data = await apiPost("/train", { episodes, level, model_slot });
     setStatus("");
     startTrainPolling();
   } catch (e) {

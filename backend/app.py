@@ -59,6 +59,19 @@ app = Flask(
 CORS(app)   # Zezwól na CORS dla wszystkich endpointów (dev)
 
 # ---------------------------------------------------------------------------
+# SLOTY MODELI (3 niezależne modele z różnymi profilami nagród)
+# ---------------------------------------------------------------------------
+_MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
+
+MODEL_SLOTS = {
+    1: {"file": "model_A.pth", "name": "Agresywny",   "reward_profile": 1},
+    2: {"file": "model_B.pth", "name": "Standardowy", "reward_profile": 2},
+    3: {"file": "model_C.pth", "name": "Cierpliwy",   "reward_profile": 3},
+}
+
+current_model_slot = 1   # aktywny slot modelu
+
+# ---------------------------------------------------------------------------
 # GLOBALNE SINGLETONY
 # ---------------------------------------------------------------------------
 # Środowisko gry (dla trybu interaktywnego)
@@ -85,8 +98,9 @@ trainer = Trainer(
     max_steps_per_ep= 500,
     save_interval   = 100,
     log_interval    = 10,
-    model_path      = os.path.join(os.path.dirname(__file__), "models", "ghost_dqn.pth"),
+    model_path      = os.path.join(_MODELS_DIR, MODEL_SLOTS[1]["file"]),
     level           = 1,
+    reward_profile  = 1,
 )
 
 # Flagi trybu
@@ -115,11 +129,11 @@ def _save_scores(scores: dict) -> None:
     with open(_SCORES_PATH, "w", encoding="utf-8") as f:
         json.dump(scores, f, ensure_ascii=False, indent=2)
 
-# Spróbuj wczytać istniejący model przy starcie
-_model_path = os.path.join(os.path.dirname(__file__), "models", "ghost_dqn.pth")
-if os.path.exists(_model_path):
-    agent.load(_model_path)
-    print(f"[App] Model wczytany automatycznie: {_model_path}")
+# Spróbuj wczytać model ze slotu 1 przy starcie
+_startup_path = os.path.join(_MODELS_DIR, MODEL_SLOTS[1]["file"])
+if os.path.exists(_startup_path):
+    agent.load(_startup_path)
+    print(f"[App] Model wczytany automatycznie: {_startup_path}")
 else:
     print("[App] Brak zapisanego modelu – agent rozpoczyna od zera (ε=1.0).")
 
@@ -300,27 +314,41 @@ def start_training():
     Response:
         { "message": str, "episodes": int, "level": int }
     """
-    data     = request.get_json(force=True, silent=True) or {}
-    episodes = int(data.get("episodes", 500))
-    level    = int(data.get("level",    1))
+    global current_model_slot
+    data       = request.get_json(force=True, silent=True) or {}
+    episodes   = int(data.get("episodes",    500))
+    level      = int(data.get("level",       1))
+    slot       = int(data.get("model_slot",  current_model_slot))
 
     if episodes < 1 or episodes > 100_000:
         return jsonify({"error": "episodes musi być w zakresie 1–100000"}), 400
     if level not in (1, 2, 3):
         level = 1
+    if slot not in MODEL_SLOTS:
+        slot = current_model_slot
 
     if trainer.is_training:
         return jsonify({"error": "Trening już trwa.", "is_training": True}), 409
 
-    # Skonfiguruj trener dla wybranego poziomu
-    trainer.level = level
+    # Jeśli zmieniono slot — wczytaj odpowiedni model
+    if slot != current_model_slot:
+        agent.save(os.path.join(_MODELS_DIR, MODEL_SLOTS[current_model_slot]["file"]))
+        agent.load(os.path.join(_MODELS_DIR, MODEL_SLOTS[slot]["file"]))
+        current_model_slot = slot
+
+    slot_info = MODEL_SLOTS[slot]
+    trainer.level          = level
+    trainer.reward_profile = slot_info["reward_profile"]
+    trainer.model_path     = os.path.join(_MODELS_DIR, slot_info["file"])
     success = trainer.start_training(episodes=episodes)
 
     if success:
         return jsonify({
-            "message":  f"Trening uruchomiony: {episodes} epizodów, poziom {level}.",
-            "episodes": episodes,
-            "level":    level,
+            "message":      f"Trening uruchomiony: {episodes} epizodów, poziom {level}, model {slot_info['name']}.",
+            "episodes":     episodes,
+            "level":        level,
+            "model_slot":   slot,
+            "model_name":   slot_info["name"],
         })
     return jsonify({"error": "Nie udało się uruchomić treningu."}), 500
 
@@ -383,6 +411,43 @@ def save_model():
         return jsonify({"message": f"Model zapisany: {path}", "path": path})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/select_model", methods=["POST"])
+def select_model():
+    """
+    Przełącza aktywny slot modelu (1, 2 lub 3).
+    Zapisuje obecny model do jego slotu, następnie wczytuje wybrany slot.
+
+    Request JSON:
+        { "slot": int }  – numer slotu (1–3)
+
+    Response:
+        { "slot": int, "name": str, "loaded": bool, "agent_info": {...} }
+    """
+    global current_model_slot
+    data = request.get_json(force=True, silent=True) or {}
+    slot = int(data.get("slot", 1))
+    if slot not in MODEL_SLOTS:
+        return jsonify({"error": "Slot musi być 1, 2 lub 3"}), 400
+    if trainer.is_training:
+        return jsonify({"error": "Nie można zmienić modelu podczas treningu"}), 409
+
+    # Zapisz bieżący model do jego slotu
+    current_path = os.path.join(_MODELS_DIR, MODEL_SLOTS[current_model_slot]["file"])
+    agent.save(current_path)
+
+    # Wczytaj nowy slot
+    current_model_slot = slot
+    new_path = os.path.join(_MODELS_DIR, MODEL_SLOTS[slot]["file"])
+    loaded = agent.load(new_path)
+
+    return jsonify({
+        "slot":       slot,
+        "name":       MODEL_SLOTS[slot]["name"],
+        "loaded":     loaded,
+        "agent_info": agent.get_info(),
+    })
 
 
 @app.route("/load_model", methods=["POST"])
