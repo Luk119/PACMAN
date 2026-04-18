@@ -623,7 +623,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print(f"  Frontend: http://localhost:5001/")
     print(f"  API docs: endpointy dostępne na http://localhost:5001/")
-    print(f"  Model:    {_model_path}")
+    print(f"  Model:    {os.path.join(_MODELS_DIR, MODEL_SLOTS[current_model_slot]['file'])}")
     print("=" * 60)
 
     app.run(
