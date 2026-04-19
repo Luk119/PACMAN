@@ -745,6 +745,7 @@ function updateHUD(data) {
   safeText("hudLevel",     data.level ?? 1);
   safeText("hudEpsilon",   data.agent_info?.epsilon?.toFixed(3) ?? "?");
   safeText("hudSteps",     data.step_count ?? 0);
+  safeText("hudCoverage",  (data.coverage_pct ?? 0) + "%");
 
   // Czas trwania rozgrywki
   if (App.gameStarted && App.gameStartTime) {
@@ -1007,6 +1008,7 @@ function updateTrainingPanel(data) {
   safeText("trainBufSize",  data.agent_info?.buffer_size ?? 0);
   safeText("trainLoss",     data.agent_info?.avg_loss?.toFixed(5) ?? "-");
   safeText("trainSteps",    data.agent_info?.training_steps ?? 0);
+  safeText("trainCoverage", (data.avg_coverage ?? 0) + "%");
   safeText("trainProgress", `${pct.toFixed(1)}%`);
 
   // Badge statusu

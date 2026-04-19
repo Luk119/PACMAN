@@ -208,6 +208,12 @@ class PacmanEnvironment:
         self.maze_template = MAZES[level]
         self._rewards = REWARD_PROFILES.get(reward_profile, REWARD_PROFILES[1])
 
+        # Liczba komórek po których duszek może chodzić (nie-ściany)
+        self._walkable_count = sum(
+            1 for r in range(ROWS) for c in range(COLS)
+            if self.maze_template[r][c] != 1
+        )
+
         # Stan gry – inicjalizowany przez reset()
         self.maze: list[list[int]] = []
         self.ghost_row: int = 0
@@ -275,6 +281,9 @@ class PacmanEnvironment:
         self.power_mode = False
         self.power_timer = 0
 
+        # Odwiedzone komórki przez duszka w tym epizodzie
+        self.ghost_visited: set = {(self.ghost_row, self.ghost_col)}
+
         return self.get_state()
 
     # -----------------------------------------------------------------------
@@ -319,6 +328,7 @@ class PacmanEnvironment:
             info["ghost_wall_hit"] = True
         else:
             self.ghost_last_action = ghost_action
+        self.ghost_visited.add((self.ghost_row, self.ghost_col))
 
         # --- 2. RUCH PAC-MANA ----------------------------------------------
         self._try_move_pacman(pacman_action)
@@ -457,6 +467,7 @@ class PacmanEnvironment:
         Zwraca pełny stan gry jako słownik JSON do wysłania do przeglądarki.
         Frontend używa tych danych do renderowania gry na canvas.
         """
+        coverage = round(len(self.ghost_visited) / self._walkable_count * 100, 1) if self._walkable_count else 0.0
         return {
             "maze":         self.maze,
             "ghost":        {"row": self.ghost_row, "col": self.ghost_col},
@@ -470,6 +481,7 @@ class PacmanEnvironment:
             "level":        self.level,
             "step_count":   self.step_count,
             "manhattan":    int(self._manhattan()),
+            "coverage_pct": coverage,
         }
 
     # -----------------------------------------------------------------------

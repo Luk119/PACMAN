@@ -224,6 +224,7 @@ class Trainer:
                 self.current_ep = ep
 
                 # Zapis loga epizodu
+                coverage = round(len(env.ghost_visited) / env._walkable_count * 100, 1) if env._walkable_count else 0.0
                 log_entry = {
                     "episode":     ep,
                     "reward":      round(total_reward, 2),
@@ -233,6 +234,7 @@ class Trainer:
                     "pacman_won":  pacman_won,
                     "avg_loss":    round(self.agent.avg_loss, 6),
                     "session":     self.session_id,
+                    "coverage":    coverage,
                 }
                 self.episode_logs.append(log_entry)
 
@@ -312,6 +314,9 @@ class Trainer:
         avg_r    = (sum(recent_r) / len(recent_r)) if recent_r else 0.0
         win_rate = (sum(recent_w) / len(recent_w) * 100) if recent_w else 0.0
 
+        recent_coverage = [log["coverage"] for log in recent_logs if "coverage" in log]
+        avg_coverage = round(sum(recent_coverage) / len(recent_coverage), 1) if recent_coverage else 0.0
+
         return {
             "is_training":     self.is_training,
             "current_episode": current_ep,
@@ -320,6 +325,7 @@ class Trainer:
             "best_reward":     round(best_r, 2) if best_r != float("-inf") else None,
             "avg_reward_100":  round(avg_r, 2),
             "win_rate_100":    round(win_rate, 1),
+            "avg_coverage":    avg_coverage,
             "recent_logs":     recent_logs,
             "agent_info":      self.agent.get_info(),
         }
