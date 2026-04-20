@@ -108,10 +108,24 @@ online_learning_enabled = False   # uczenie podczas interaktywnej gry
 game_lock = threading.Lock()      # blokada dostępu do game_env
 
 # ---------------------------------------------------------------------------
-# TABLICA WYNIKÓW – PERSISTENCJA
+# TABLICA WYNIKÓW – PERSISTENCJA (Supabase lub plik lokalny)
 # ---------------------------------------------------------------------------
 _SCORES_PATH = os.path.join(os.path.dirname(__file__), "models", "scores.json")
 _scores_lock = threading.Lock()
+
+# Inicjalizacja Supabase (jeśli skonfigurowane)
+_supabase = None
+try:
+    _sb_url = os.environ.get("SUPABASE_URL")
+    _sb_key = os.environ.get("SUPABASE_KEY")
+    if _sb_url and _sb_key:
+        from supabase import create_client
+        _supabase = create_client(_sb_url, _sb_key)
+        print("[App] Supabase połączone — tablica wyników w chmurze.")
+    else:
+        print("[App] Supabase nie skonfigurowane — tablica wyników w pliku lokalnym.")
+except Exception as e:
+    print(f"[App] Błąd Supabase: {e} — używam pliku lokalnego.")
 
 
 def _load_scores() -> dict:
@@ -128,6 +142,31 @@ def _save_scores(scores: dict) -> None:
     os.makedirs(os.path.dirname(_SCORES_PATH), exist_ok=True)
     with open(_SCORES_PATH, "w", encoding="utf-8") as f:
         json.dump(scores, f, ensure_ascii=False, indent=2)
+
+
+def _sb_get_scores(level: str) -> list:
+    res = _supabase.table("scores").select("*") \
+        .eq("level", int(level)) \
+        .order("score", desc=True) \
+        .order("time_s", desc=False) \
+        .limit(10).execute()
+    return [{"nick": r["nick"], "score": r["score"],
+             "time": r["time_s"], "date": r["date"]} for r in res.data]
+
+
+def _sb_post_score(nick: str, score: int, time_s: float, level: str) -> list:
+    _supabase.table("scores").insert({
+        "nick": nick, "score": score,
+        "time_s": time_s, "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "level": int(level)
+    }).execute()
+    return _sb_get_scores(level)
+
+
+def _sb_guest_counter() -> int:
+    res = _supabase.table("scores").select("id", count="exact") \
+        .like("nick", "Guest_%").execute()
+    return res.count or 0
 
 # Spróbuj wczytać model ze slotu 1 przy starcie
 _startup_path = os.path.join(_MODELS_DIR, MODEL_SLOTS[1]["file"])
@@ -558,6 +597,11 @@ def get_scores():
     level = request.args.get("level", "1")
     if level not in ("1", "2", "3"):
         level = "1"
+
+    if _supabase:
+        entries = _sb_get_scores(level)
+        return jsonify({"level": int(level), "scores": entries, "guest_counter": 0})
+
     with _scores_lock:
         data = _load_scores()
     entries = data.get(level, [])
@@ -587,12 +631,19 @@ def post_score():
     """
     body  = request.get_json(force=True, silent=True) or {}
     score = int(body.get("score", 0))
+
     level = str(int(body.get("level", 1)))
     time_s = float(body.get("time", 0))
     nick   = str(body.get("nick", "")).strip()
 
     if level not in ("1", "2", "3"):
         level = "1"
+
+    if _supabase:
+        if not nick:
+            nick = f"Guest_{_sb_guest_counter() + 1}"
+        entries = _sb_post_score(nick, score, round(time_s, 1), level)
+        return jsonify({"message": "Wynik zapisany!", "nick": nick, "scores": entries})
 
     with _scores_lock:
         scores = _load_scores()
