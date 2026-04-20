@@ -1177,8 +1177,9 @@ function onTrainLevelSelect(level) {
 
 function onLevelSelect(level) {
   App.currentLevel = level;
-  document.querySelectorAll(".level-btn").forEach((btn, i) => {
-    btn.classList.toggle("active", i + 1 === level);
+  [1, 2, 3].forEach(l => {
+    const btn = document.getElementById(`playLvlBtn${l}`);
+    if (btn) btn.classList.toggle("active", l === level);
   });
   initGame(level);
 }
