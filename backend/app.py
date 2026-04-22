@@ -369,13 +369,16 @@ def start_training():
     if trainer.is_training:
         return jsonify({"error": "Trening już trwa.", "is_training": True}), 409
 
-    # Jeśli zmieniono slot — wczytaj odpowiedni model
+    # Wczytaj odpowiedni model (zawsze, żeby upewnić się że epsilon jest właściwy)
     if slot != current_model_slot:
         agent.save(os.path.join(_MODELS_DIR, MODEL_SLOTS[current_model_slot]["file"]))
-        loaded = agent.load(os.path.join(_MODELS_DIR, MODEL_SLOTS[slot]["file"]))
-        if not loaded:
-            agent.epsilon = agent.epsilon_start
         current_model_slot = slot
+
+    model_file = os.path.join(_MODELS_DIR, MODEL_SLOTS[slot]["file"])
+    loaded = agent.load(model_file)
+    if not loaded:
+        # Model nie istnieje — zacznij od pełnej eksploracji
+        agent.epsilon = agent.epsilon_start
 
     slot_info = MODEL_SLOTS[slot]
     trainer.level          = level
