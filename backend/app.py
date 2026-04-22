@@ -372,7 +372,9 @@ def start_training():
     # Jeśli zmieniono slot — wczytaj odpowiedni model
     if slot != current_model_slot:
         agent.save(os.path.join(_MODELS_DIR, MODEL_SLOTS[current_model_slot]["file"]))
-        agent.load(os.path.join(_MODELS_DIR, MODEL_SLOTS[slot]["file"]))
+        loaded = agent.load(os.path.join(_MODELS_DIR, MODEL_SLOTS[slot]["file"]))
+        if not loaded:
+            agent.epsilon = agent.epsilon_start
         current_model_slot = slot
 
     slot_info = MODEL_SLOTS[slot]
@@ -480,6 +482,9 @@ def select_model():
     current_model_slot = slot
     new_path = os.path.join(_MODELS_DIR, MODEL_SLOTS[slot]["file"])
     loaded = agent.load(new_path)
+    if not loaded:
+        # Model nie istnieje jeszcze — reset epsilon do pełnej eksploracji
+        agent.epsilon = agent.epsilon_start
 
     # Zaktualizuj profil nagród w środowisku gry (uczenie online)
     from environment import REWARD_PROFILES

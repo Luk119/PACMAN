@@ -100,6 +100,7 @@ class DQNAgent:
         self.state_size         = state_size
         self.action_size        = action_size
         self.gamma              = gamma
+        self.epsilon_start      = epsilon_start
         self.epsilon            = epsilon_start
         self.epsilon_min        = epsilon_min
         self.epsilon_decay      = epsilon_decay
