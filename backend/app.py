@@ -469,7 +469,7 @@ def select_model():
     slot = int(data.get("slot", 1))
     if slot not in MODEL_SLOTS:
         return jsonify({"error": "Slot musi być 1, 2 lub 3"}), 400
-    if trainer.is_training:
+    if trainer.is_training and trainer.is_alive():
         return jsonify({"error": "Nie można zmienić modelu podczas treningu"}), 409
 
     # Zapisz bieżący model do jego slotu
