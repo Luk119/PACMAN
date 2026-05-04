@@ -172,14 +172,15 @@ MAZES = {
 
 REWARD_PROFILES = {
     1: {
-        # Agresywny – wysoka nagroda za złapanie, duża kara za każdy krok
-        # Efekt: duszek goni Pac-Mana bez wahania, ryzykuje ściany
-        "catch_reward":       500.0,
-        "direction_mult":      8.0,
-        "step_penalty":       -1.0,
-        "ghost_eaten":       -20.0,
-        "timeout_penalty":  -100.0,
-        "pacman_won":       -100.0,
+        # Agresywny – bardzo wysoka nagroda za złapanie, duża presja czasu
+        # Efekt: duszek goni Pac-Mana maksymalnie agresywnie
+        "catch_reward":       700.0,
+        "direction_mult":      6.0,
+        "step_penalty":       -2.0,
+        "ghost_eaten":       -40.0,
+        "timeout_penalty":  -200.0,
+        "pacman_won":       -200.0,
+        "backtrack_penalty":  -3.0,
     },
     2: {
         # Standardowy – zbalansowane wartości (domyślny)
@@ -189,16 +190,18 @@ REWARD_PROFILES = {
         "ghost_eaten":       -50.0,
         "timeout_penalty":   -50.0,
         "pacman_won":        -50.0,
+        "backtrack_penalty":  -3.0,
     },
     3: {
-        # Cierpliwy – mała kara za krok, duża kara za bycie zjedzonym
-        # Efekt: duszek jest ostrożny, unika power pelletów
-        "catch_reward":       300.0,
-        "direction_mult":      3.0,
-        "step_penalty":       -0.1,
-        "ghost_eaten":      -100.0,
-        "timeout_penalty":   -30.0,
-        "pacman_won":        -30.0,
+        # Cierpliwy – ostrożny, bardzo boi się być zjedzonym
+        # Efekt: duszek unika power pelletów, goni wolniej ale skutecznie
+        "catch_reward":       400.0,
+        "direction_mult":      4.0,
+        "step_penalty":       -0.2,
+        "ghost_eaten":      -150.0,
+        "timeout_penalty":   -50.0,
+        "pacman_won":        -50.0,
+        "backtrack_penalty":  -3.0,
     },
 }
 
@@ -345,6 +348,7 @@ class PacmanEnvironment:
         # --- 1. RUCH DUSZKA ------------------------------------------------
         ghost_prev_r, ghost_prev_c = self.ghost_row, self.ghost_col
         pacman_prev_r, pacman_prev_c = self.pacman_row, self.pacman_col
+        ghost_prev_action = self.ghost_last_action   # zapisz przed aktualizacją
 
         ghost_moved = self._try_move_ghost(ghost_action)
         if not ghost_moved:
@@ -364,9 +368,8 @@ class PacmanEnvironment:
         elif cell == 2:
             self.maze[self.pacman_row][self.pacman_col] = 3
             self.score += 50
-            if not self.training_mode:
-                self.power_mode = True
-                self.power_timer = 50   # ~50 kroków trybu mocy
+            self.power_mode = True
+            self.power_timer = 50   # ~50 kroków trybu mocy
         # Odliczanie trybu mocy
         if self.power_mode:
             self.power_timer -= 1
@@ -406,7 +409,15 @@ class PacmanEnvironment:
 
         ghost_delta = dist_ghost_before - dist_now   # >0 = duszek zbliżył się
 
-        reward += ghost_delta * self._rewards["direction_mult"]   # jedyny sygnał kierunkowy
+        # Kara za zawracanie — zapobiega oscylacji
+        if ghost_moved and ghost_action == OPPOSITE_ACTION.get(ghost_prev_action, -1):
+            reward += self._rewards["backtrack_penalty"]
+
+        # Sygnał kierunkowy: odwrócony podczas power mode (duszek powinien uciekać)
+        if self.power_mode:
+            reward -= ghost_delta * self._rewards["direction_mult"]
+        else:
+            reward += ghost_delta * self._rewards["direction_mult"]
 
         self.prev_manhattan = dist_now
 
