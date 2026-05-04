@@ -139,6 +139,37 @@ MAZES = {
 # ---------------------------------------------------------------------------
 # PROFILE NAGRÓD (3 różne systemy kar i nagród)
 # ---------------------------------------------------------------------------
+
+# 1: { STARE NAGRODY
+#         # Agresywny – wysoka nagroda za złapanie, duża kara za każdy krok
+#         # Efekt: duszek goni Pac-Mana bez wahania, ryzykuje ściany
+#         "catch_reward":       500.0,
+#         "direction_mult":      8.0,
+#         "step_penalty":       -1.0,
+#         "ghost_eaten":       -20.0,
+#         "timeout_penalty":  -100.0,
+#         "pacman_won":       -100.0,
+#     },
+#     2: {
+#         # Standardowy – zbalansowane wartości (domyślny)
+#         "catch_reward":       500.0,
+#         "direction_mult":      5.0,
+#         "step_penalty":       -0.5,
+#         "ghost_eaten":       -50.0,
+#         "timeout_penalty":   -50.0,
+#         "pacman_won":        -50.0,
+#     },
+#     3: {
+#         # Cierpliwy – mała kara za krok, duża kara za bycie zjedzonym
+#         # Efekt: duszek jest ostrożny, unika power pelletów
+#         "catch_reward":       300.0,
+#         "direction_mult":      3.0,
+#         "step_penalty":       -0.1,
+#         "ghost_eaten":      -100.0,
+#         "timeout_penalty":   -30.0,
+#         "pacman_won":        -30.0,
+#     },
+
 REWARD_PROFILES = {
     1: {
         # Agresywny – wysoka nagroda za złapanie, duża kara za każdy krok
