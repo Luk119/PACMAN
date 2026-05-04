@@ -155,7 +155,7 @@ REWARD_PROFILES = {
         "catch_reward":       500.0,
         "direction_mult":      5.0,
         "step_penalty":       -0.5,
-        "ghost_eaten":       -20.0,
+        "ghost_eaten":       -50.0,
         "timeout_penalty":   -50.0,
         "pacman_won":        -50.0,
     },
