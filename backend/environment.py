@@ -22,7 +22,7 @@ PRZESTRZEŃ AKCJI (4 ruchy):
     2 – góra   (row - 1)
     3 – dół    (row + 1)
 
-PRZESTRZEŃ STANÓW (wektor 15 cech):
+PRZESTRZEŃ STANÓW (wektor 16 cech):
     [0]  ghost_row / (ROWS-1)                          – znorm. wiersz duszka
     [1]  ghost_col / (COLS-1)                          – znorm. kolumna duszka
     [2]  pacman_row / (ROWS-1)                         – znorm. wiersz Pac-Mana
@@ -38,6 +38,7 @@ PRZESTRZEŃ STANÓW (wektor 15 cech):
     [12] wall_down_pacman                              – ściana pod Pac-Manem
     [13] wall_left_pacman                              – ściana po lewej Pac-Mana
     [14] wall_right_pacman                             – ściana po prawej Pac-Mana
+    [15] power_timer / 50                              – znorm. czas power mode
 
 FUNKCJA NAGRODY (dla duszka):
     +100.0  – złapanie Pac-Mana (koniec epizodu)
@@ -56,7 +57,7 @@ import numpy as np
 # STAŁE
 # ---------------------------------------------------------------------------
 ROWS, COLS = 19, 19
-STATE_SIZE = 15    # długość wektora stanu
+STATE_SIZE = 16    # długość wektora stanu
 ACTION_SIZE = 4    # liczba możliwych akcji
 
 # Kierunki: (delta_row, delta_col)
@@ -180,7 +181,7 @@ REWARD_PROFILES = {
         "ghost_eaten":       -40.0,
         "timeout_penalty":  -200.0,
         "pacman_won":       -200.0,
-        "backtrack_penalty":  -3.0,
+        "backtrack_penalty": -10.0,
     },
     2: {
         # Standardowy – zbalansowane wartości (domyślny)
@@ -190,7 +191,7 @@ REWARD_PROFILES = {
         "ghost_eaten":       -50.0,
         "timeout_penalty":   -50.0,
         "pacman_won":        -50.0,
-        "backtrack_penalty":  -3.0,
+        "backtrack_penalty":  -8.0,
     },
     3: {
         # Cierpliwy – ostrożny, bardzo boi się być zjedzonym
@@ -201,7 +202,7 @@ REWARD_PROFILES = {
         "ghost_eaten":      -150.0,
         "timeout_penalty":   -50.0,
         "pacman_won":        -50.0,
-        "backtrack_penalty":  -3.0,
+        "backtrack_penalty":  -10.0,
     },
 }
 
@@ -521,14 +522,11 @@ class PacmanEnvironment:
     # -----------------------------------------------------------------------
     def get_autopilot_action(self) -> int:
         """
-        Prosta heurystyka ucieczki Pac-Mana do użytku w trybie automatycznego
-        treningu (bez udziału gracza).
+        Heurystyka ruchu Pac-Mana w trybie automatycznego treningu.
 
-        Strategia:
-        1. Wyznacz kierunek od duszka do Pac-Mana.
-        2. Preferuj ruch w kierunku przeciwnym do duszka (ucieczka).
-        3. Jeśli ucieczka jest zablokowana ścianą, wybierz losowy dostępny ruch.
-        4. Nie zawracaj, jeśli masz inną opcję.
+        Tryb normalny: ucieka od duszka (maksymalizuje dystans Manhattan).
+        Power mode:    goni duszka (minimalizuje dystans Manhattan), by duszek
+                       uczył się aktywnej ucieczki przed pościgiem gracza.
 
         Returns:
             Akcja (0–3) dla Pac-Mana.
@@ -536,20 +534,8 @@ class PacmanEnvironment:
         pr, pc = self.pacman_row, self.pacman_col
         gr, gc = self.ghost_row,  self.ghost_col
 
-        dr = pr - gr  # ujemna → duszek jest poniżej Pac-Mana
-        dc = pc - gc  # ujemna → duszek jest po prawej Pac-Mana
-
-        # Kierunki ucieczki (od duszka): jeśli duszek jest na dole,
-        # Pac-Man chce iść w górę (dr > 0 → akcja góra = 2)
-        escape_actions = []
-        if dr > 0:
-            escape_actions.append(2)   # góra (uciekaj od duszka poniżej)
-        elif dr < 0:
-            escape_actions.append(3)   # dół
-        if dc > 0:
-            escape_actions.append(1)   # lewo (uciekaj od duszka po prawej)
-        elif dc < 0:
-            escape_actions.append(0)   # prawo
+        dr = pr - gr
+        dc = pc - gc
 
         # Filtruj do dostępnych (niesciennych) ruchów
         valid_actions = [a for a in range(ACTION_SIZE)
@@ -561,35 +547,60 @@ class PacmanEnvironment:
         if non_backtrack:
             valid_actions = non_backtrack
 
-        # Preferuj kierunki ucieczki — wybierz ten który maksymalizuje dystans od duszka
-        preferred = [a for a in escape_actions if a in valid_actions]
-        if preferred:
-            best, best_dist = preferred[0], -1
-            for a in preferred:
+        if not valid_actions:
+            return self.pacman_last_action
+
+        if self.power_mode:
+            # POWER MODE: Pac-Man goni duszka — wybiera ruch minimalizujący dystans
+            chase_actions = []
+            if dr > 0:
+                chase_actions.append(3)   # dół (w kierunku duszka poniżej)
+            elif dr < 0:
+                chase_actions.append(2)   # góra
+            if dc > 0:
+                chase_actions.append(0)   # prawo (w kierunku duszka po prawej)
+            elif dc < 0:
+                chase_actions.append(1)   # lewo
+
+            preferred = [a for a in chase_actions if a in valid_actions]
+            candidates = preferred if preferred else valid_actions
+
+            best, best_dist = candidates[0], float("inf")
+            for a in candidates:
                 dr2, dc2 = ACTION_DELTAS[a]
-                nr = (self.pacman_row + dr2) % ROWS
-                nc = (self.pacman_col + dc2) % COLS
-                d = abs(nr - self.ghost_row) + abs(nc - self.ghost_col)
-                if d > best_dist:
+                nr = (pr + dr2) % ROWS
+                nc = (pc + dc2) % COLS
+                d = abs(nr - gr) + abs(nc - gc)
+                if d < best_dist:
                     best_dist = d
                     best = a
             return best
 
-        # Fallback: wybierz ruch który najbardziej oddala od duszka
-        if valid_actions:
-            best, best_dist = valid_actions[0], -1
-            for a in valid_actions:
+        else:
+            # TRYB NORMALNY: Pac-Man ucieka od duszka — maksymalizuje dystans
+            escape_actions = []
+            if dr > 0:
+                escape_actions.append(2)   # góra (od duszka poniżej)
+            elif dr < 0:
+                escape_actions.append(3)   # dół
+            if dc > 0:
+                escape_actions.append(1)   # lewo (od duszka po prawej)
+            elif dc < 0:
+                escape_actions.append(0)   # prawo
+
+            preferred = [a for a in escape_actions if a in valid_actions]
+            candidates = preferred if preferred else valid_actions
+
+            best, best_dist = candidates[0], -1
+            for a in candidates:
                 dr2, dc2 = ACTION_DELTAS[a]
-                nr = (self.pacman_row + dr2) % ROWS
-                nc = (self.pacman_col + dc2) % COLS
-                d = abs(nr - self.ghost_row) + abs(nc - self.ghost_col)
+                nr = (pr + dr2) % ROWS
+                nc = (pc + dc2) % COLS
+                d = abs(nr - gr) + abs(nc - gc)
                 if d > best_dist:
                     best_dist = d
                     best = a
             return best
-
-        # Ostateczność: oddaj poprzednią akcję
-        return self.pacman_last_action
 
     # -----------------------------------------------------------------------
     # METODY POMOCNICZE – RUCH

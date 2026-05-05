@@ -249,6 +249,16 @@ def step():
         # Akcja duszka z modelu DQN (ε=0 → zawsze greedy w trybie gry)
         ghost_action, q_values = agent.select_action_with_qvalues(current_state)
 
+        # Maskowanie ścian: nie wybieraj ruchów niemożliwych (action masking)
+        valid_moves = game_env.get_valid_ghost_actions()
+        if ghost_action not in valid_moves and valid_moves:
+            q_adj = list(q_values)
+            for _a in range(4):
+                if _a not in valid_moves:
+                    q_adj[_a] = -1e9
+            ghost_action = int(q_adj.index(max(q_adj)))
+            q_values = q_adj
+
         # Krok środowiska
         next_state, reward, done, info = game_env.step(ghost_action, pacman_action)
 
@@ -359,8 +369,8 @@ def start_training():
     level      = int(data.get("level",       1))
     slot       = int(data.get("model_slot",  current_model_slot))
 
-    if episodes < 1 or episodes > 100_000:
-        return jsonify({"error": "episodes musi być w zakresie 1–100000"}), 400
+    if episodes < 1 or episodes > 500_000:
+        return jsonify({"error": "episodes musi być w zakresie 1–500000"}), 400
     if level not in (1, 2, 3):
         level = 1
     if slot not in MODEL_SLOTS:

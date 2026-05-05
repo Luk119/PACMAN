@@ -1161,7 +1161,7 @@ async function onToggleOnlineLearning(checkbox) {
 
 function onTrainEpSelect(ep) {
   App._trainEpisodes = ep;
-  [1000, 10000, 100000].forEach(v => {
+  [1000, 10000, 500000].forEach(v => {
     const btn = document.getElementById(`trainEpBtn${v}`);
     if (btn) btn.classList.toggle("active", v === ep);
   });
