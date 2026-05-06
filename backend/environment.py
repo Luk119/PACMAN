@@ -178,9 +178,9 @@ REWARD_PROFILES = {
         "catch_reward":       700.0,
         "direction_mult":      6.0,
         "step_penalty":       -2.0,
-        "ghost_eaten":       -40.0,
-        "timeout_penalty":  -200.0,
-        "pacman_won":       -200.0,
+        "ghost_eaten":       -60.0,
+        "timeout_penalty":  -100.0,
+        "pacman_won":       -100.0,
         "backtrack_penalty": -10.0,
     },
     2: {
@@ -194,15 +194,14 @@ REWARD_PROFILES = {
         "backtrack_penalty":  -8.0,
     },
     3: {
-        # Cierpliwy – ostrożny, bardzo boi się być zjedzonym
-        # Efekt: duszek unika power pelletów, goni wolniej ale skutecznie
+        # Cierpliwy – wolny pościg, nie panikuje przy power pelletach
         "catch_reward":       400.0,
         "direction_mult":      4.0,
-        "step_penalty":       -0.2,
-        "ghost_eaten":      -150.0,
-        "timeout_penalty":   -50.0,
-        "pacman_won":        -50.0,
-        "backtrack_penalty":  -10.0,
+        "step_penalty":       -0.5,
+        "ghost_eaten":       -40.0,
+        "timeout_penalty":   -40.0,
+        "pacman_won":        -40.0,
+        "backtrack_penalty":  -8.0,
     },
 }
 
