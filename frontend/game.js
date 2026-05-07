@@ -73,7 +73,7 @@ const App = {
   countdown:        null,         // null lub liczba 3/2/1/0 podczas odliczania
   countdownTotalStart: null,      // czas startu całego odliczania (do animacji tła)
   _trainLevel:        1,          // wybrany poziom w panelu treningu
-  _trainEpisodes:     1000,       // wybrana liczba epizodów treningu
+  _trainEpisodes:     10000,      // wybrana liczba epizodów treningu
   _playModelSlot:     1,          // wybrany model w panelu gry (1=A, 2=B, 3=C)
   _trainModelSlot:    1,          // wybrany model w panelu treningu
   _highscore:         0,          // globalny najlepszy wynik
@@ -1092,7 +1092,7 @@ function onTrainModelSelect(slot) {
 }
 
 async function onStartTraining() {
-  const episodes   = App._trainEpisodes ?? 1000;
+  const episodes   = App._trainEpisodes ?? 10000;
   const level      = App._trainLevel ?? 1;
   const model_slot = App._trainModelSlot ?? 1;
 
@@ -1161,7 +1161,7 @@ async function onToggleOnlineLearning(checkbox) {
 
 function onTrainEpSelect(ep) {
   App._trainEpisodes = ep;
-  [1000, 10000, 50000].forEach(v => {
+  [10000, 50000, 150000].forEach(v => {
     const btn = document.getElementById(`trainEpBtn${v}`);
     if (btn) btn.classList.toggle("active", v === ep);
   });
