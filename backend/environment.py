@@ -195,8 +195,8 @@ REWARD_PROFILES = {
     },
     3: {
         # Cierpliwy – wolny pościg, nie panikuje przy power pelletach
-        "catch_reward":       400.0,
-        "direction_mult":      4.0,
+        "catch_reward":       450.0,
+        "direction_mult":      5.5,
         "step_penalty":       -0.5,
         "ghost_eaten":       -40.0,
         "timeout_penalty":   -40.0,
