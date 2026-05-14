@@ -227,16 +227,6 @@ REWARD_PROFILES = {
         "pacman_won":        -50.0,
         "backtrack_penalty":  -8.0,
     },
-    3: {
-        # Cierpliwy – wolny pościg, nie panikuje przy power pelletach
-        "catch_reward":       650.0,
-        "direction_mult":      7.0,
-        "step_penalty":       -0.5,
-        "ghost_eaten":       -40.0,
-        "timeout_penalty":   -80.0,
-        "pacman_won":        -80.0,
-        "backtrack_penalty":  -8.0,
-    },
 }
 
 # ---------------------------------------------------------------------------
