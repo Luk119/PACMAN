@@ -209,7 +209,7 @@ REWARD_PROFILES = {
     1: {
         # Agresywny – bardzo wysoka nagroda za złapanie, duża presja czasu
         # Efekt: duszek goni Pac-Mana maksymalnie agresywnie
-        "catch_reward":       700.0,
+        "catch_reward":       750.0,
         "direction_mult":      6.0,
         "step_penalty":       -2.0,
         "ghost_eaten":       -60.0,
@@ -219,9 +219,9 @@ REWARD_PROFILES = {
     },
     2: {
         # Standardowy – zbalansowane wartości (domyślny)
-        "catch_reward":       500.0,
+        "catch_reward":       600.0,
         "direction_mult":      5.0,
-        "step_penalty":       -0.5,
+        "step_penalty":       -1,
         "ghost_eaten":       -50.0,
         "timeout_penalty":   -50.0,
         "pacman_won":        -50.0,
