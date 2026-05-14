@@ -170,6 +170,40 @@ MAZES = {
 #         "timeout_penalty":   -30.0,
 #         "pacman_won":        -30.0,
 #     },
+# Stare niezle
+# REWARD_PROFILES = {
+#     1: {
+#         # Agresywny – bardzo wysoka nagroda za złapanie, duża presja czasu
+#         # Efekt: duszek goni Pac-Mana maksymalnie agresywnie
+#         "catch_reward":       700.0,
+#         "direction_mult":      6.0,
+#         "step_penalty":       -2.0,
+#         "ghost_eaten":       -60.0,
+#         "timeout_penalty":  -100.0,
+#         "pacman_won":       -100.0,
+#         "backtrack_penalty": -10.0,
+#     },
+#     2: {
+#         # Standardowy – zbalansowane wartości (domyślny)
+#         "catch_reward":       500.0,
+#         "direction_mult":      5.0,
+#         "step_penalty":       -0.5,
+#         "ghost_eaten":       -50.0,
+#         "timeout_penalty":   -50.0,
+#         "pacman_won":        -50.0,
+#         "backtrack_penalty":  -8.0,
+#     },
+#     3: {
+#         # Cierpliwy – wolny pościg, nie panikuje przy power pelletach
+#         "catch_reward":       650.0,
+#         "direction_mult":      7.0,
+#         "step_penalty":       -0.5,
+#         "ghost_eaten":       -40.0,
+#         "timeout_penalty":   -80.0,
+#         "pacman_won":        -80.0,
+#         "backtrack_penalty":  -8.0,
+#     },
+# }
 
 REWARD_PROFILES = {
     1: {
@@ -195,12 +229,12 @@ REWARD_PROFILES = {
     },
     3: {
         # Cierpliwy – wolny pościg, nie panikuje przy power pelletach
-        "catch_reward":       550.0,
-        "direction_mult":      5.5,
+        "catch_reward":       650.0,
+        "direction_mult":      7.0,
         "step_penalty":       -0.5,
         "ghost_eaten":       -40.0,
-        "timeout_penalty":   -60.0,
-        "pacman_won":        -60.0,
+        "timeout_penalty":   -80.0,
+        "pacman_won":        -80.0,
         "backtrack_penalty":  -8.0,
     },
 }
