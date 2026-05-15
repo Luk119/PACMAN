@@ -82,7 +82,7 @@ MAZES = {
         [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1],
         [1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1],
         [1, 1, 1, 0, 0, 0, 0, 1, 1, 3, 1, 1, 0, 0, 0, 0, 1, 1, 1],
-        [0, 0, 0, 0, 1, 1, 0, 1, 3, 3, 3, 1, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 3, 3, 3, 0, 0, 1, 1, 0, 0, 0, 0],
         [1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1],
         [1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1],
         [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1],
@@ -207,25 +207,24 @@ MAZES = {
 
 REWARD_PROFILES = {
     1: {
-        # Agresywny – bardzo wysoka nagroda za złapanie, duża presja czasu
-        # Efekt: duszek goni Pac-Mana maksymalnie agresywnie
-        "catch_reward":       750.0,
+        # CIERPLIWY (slot 1, model_A_v2.pth)
+        "catch_reward":       550.0,
         "direction_mult":      6.0,
-        "step_penalty":       -2.0,
-        "ghost_eaten":       -60.0,
-        "timeout_penalty":  -100.0,
-        "pacman_won":       -100.0,
-        "backtrack_penalty": -10.0,
+        "step_penalty":       -1.0,
+        "ghost_eaten":       -50.0,
+        "timeout_penalty":  -90.0,
+        "pacman_won":       -80.0,
+        "backtrack_penalty": -13.0,
     },
     2: {
-        # Standardowy – zbalansowane wartości (domyślny)
-        "catch_reward":       600.0,
-        "direction_mult":      5.0,
-        "step_penalty":       -1,
+        # AGRESYWNY (slot 2, model_B_v2.pth)
+        "catch_reward":       700.0,
+        "direction_mult":      8.0,
+        "step_penalty":       -1.0,
         "ghost_eaten":       -50.0,
-        "timeout_penalty":   -50.0,
-        "pacman_won":        -50.0,
-        "backtrack_penalty":  -8.0,
+        "timeout_penalty":   -120.0,
+        "pacman_won":        -120.0,
+        "backtrack_penalty":  -15.0,
     },
 }
 

@@ -64,8 +64,8 @@ CORS(app)   # Zezwól na CORS dla wszystkich endpointów (dev)
 _MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
 
 MODEL_SLOTS = {
-    1: {"file": "model_A_v2.pth", "name": "Agresywny",   "reward_profile": 1},
-    2: {"file": "model_B_v2.pth", "name": "Cierpliwy", "reward_profile": 2},
+    1: {"file": "model_A_v2.pth", "name": "Cierpliwy",  "reward_profile": 1},
+    2: {"file": "model_B_v2.pth", "name": "Agresywny",  "reward_profile": 2},
 }
 
 current_model_slot = 1   # aktywny slot modelu
